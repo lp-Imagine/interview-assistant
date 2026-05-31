@@ -1,0 +1,190 @@
+:root {
+  /* === 主色 === */
+  --color-primary: #4f6ef7;
+  --color-primary-hover: #3b5de7;
+  --color-primary-light: #eef1ff;
+  --color-primary-border: #d0d6ff;
+
+  /* === 中性色 === */
+  --color-bg: #f1f4f9;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f8f9fc;
+  --color-surface-muted: #f2f4f8;
+
+  --color-border: #e4e7ee;
+  --color-border-light: #eef0f5;
+  --color-border-input: #dde0e8;
+
+  --color-text: #121826;
+  --color-text-secondary: #505a6e;
+  --color-text-muted: #6b7388;
+  --color-text-placeholder: #9ba2b3;
+
+  /* === 语义色 === */
+  --color-success: #17a34d;
+  --color-success-bg: #eefbf2;
+  --color-danger: #e84c4c;
+  --color-danger-bg: #fef4f4;
+  --color-warning: #e0880b;
+  --color-warning-bg: #fffbf0;
+
+  /* === 侧边栏深色 === */
+  --sidebar-bg: #1e2235;
+  --sidebar-text: #9da4ba;
+  --sidebar-text-active: #ffffff;
+  --sidebar-item-hover: #282d42;
+  --sidebar-item-active: #323854;
+
+  /* === 字号层级 === */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+  --text-hero: 36px;
+
+  /* === 间距（4px 基准） === */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  /* === 圆角 === */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-full: 999px;
+
+  /* === 阴影 === */
+  --shadow-sm: 0 1px 3px rgba(18, 24, 38, 0.05);
+  --shadow-md: 0 4px 16px rgba(18, 24, 38, 0.07);
+  --shadow-lg: 0 8px 32px rgba(18, 24, 38, 0.1);
+  --shadow-primary: 0 4px 14px rgba(79, 110, 247, 0.25);
+
+  /* === 过渡 === */
+  --transition: 0.2s ease;
+
+  /* === 布局 === */
+  --sidebar-width: 240px;
+  --topbar-height: 64px;
+  --content-padding: 28px;
+}
+
+/* === 全局重置 === */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: var(--text-base);
+  line-height: 1.6;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === 全局动画 === */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-text-placeholder);
+  animation: typing-bounce 1.2s infinite;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+/* === 滚动条 === */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-placeholder);
+}
+
+/* ===== 移动端全局适配 ===== */
+@media (max-width: 768px) {
+  :root {
+    --content-padding: 12px;
+    --topbar-height: 52px;
+    --sidebar-width: 0px;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* 安全区适配 iPhone notch */
+  .app-layout,
+  .guest-layout {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* 确保触控目标足够大 */
+@media (pointer: coarse) {
+  button,
+  a.nav-item,
+  .mode-tab,
+  .version-tab,
+  .follow-item.has-answer,
+  .card-header {
+    min-height: 44px;
+  }
+
+  input, textarea, select {
+    font-size: 16px !important; /* 防止 iOS 缩放 */
+  }
+}

@@ -1,0 +1,96 @@
+/* === 统一 Markdown 渲染内容样式 === */
+/* 用法: <div class="md-content" v-html="md.render(content)" /> */
+
+.md-content {
+  line-height: 1.75;
+  color: var(--color-text-secondary);
+  word-wrap: break-word;
+}
+
+.md-content h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: var(--color-text);
+}
+
+.md-content h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 12px 0 6px;
+  color: var(--color-text);
+}
+
+.md-content p {
+  margin: 8px 0;
+}
+
+.md-content ul,
+.md-content ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.md-content li {
+  margin: 4px 0;
+}
+
+.md-content code {
+  background: var(--color-surface-muted);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  color: #c7254e;
+  word-break: break-all;
+}
+
+.md-content pre {
+  background: #f6f8fa;
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  overflow-x: auto;
+  margin: 10px 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.md-content pre code {
+  background: transparent;
+  color: #1f2328;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.md-content strong {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.md-content blockquote {
+  border-left: 4px solid var(--color-primary);
+  padding: 8px 16px;
+  margin: 12px 0;
+  background: var(--color-primary-light);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  color: var(--color-text-secondary);
+}
+
+.md-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+
+.md-content th,
+.md-content td {
+  border: 1px solid var(--color-border);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.md-content th {
+  background: var(--color-surface-muted);
+  font-weight: 600;
+}

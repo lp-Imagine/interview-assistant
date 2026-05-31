@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  name      String?
+  password  String
+  createdAt DateTime   @default(now())
+  documents Document[]
+}
+
+model Document {
+  id        String         @id @default(uuid())
+  userId    String
+  type      DocumentType
+  fileName  String
+  fileUrl   String
+  status    DocumentStatus @default(UPLOADED)
+  createdAt DateTime       @default(now())
+  user      User           @relation(fields: [userId], references: [id])
+  chunks    Chunk[]
+  analysis  AnalysisResult?
+}
+
+enum DocumentType {
+  RESUME
+  JD
+  INTERVIEW_EXP
+}
+
+enum DocumentStatus {
+  UPLOADED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Chunk {
+  id         String   @id @default(uuid())
+  documentId String
+  content    String
+  embedding  Unsupported("vector(4096)")?
+  chunkIndex Int
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model AnalysisResult {
+  id         String   @id @default(uuid())
+  documentId String   @unique
+  techStack  String[]
+  keywords   String[]
+  summary    String?
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+model Question {
+  id         String           @id @default(uuid())
+  userId     String
+  category   QuestionCategory
+  title      String
+  frequency  String?
+  batchIndex Int
+  createdAt  DateTime         @default(now())
+  answers    QuestionAnswer[]
+}
+
+enum QuestionCategory {
+  FUNDAMENTAL
+  PROJECT
+  SCENARIO
+  COMPREHENSIVE
+}
+
+model QuestionAnswer {
+  id              String   @id @default(uuid())
+  questionId      String
+  answer          String
+  structure       Json?
+  followUps       String[]
+  insight         String?
+  followUpThreads Json?
+  createdAt       DateTime @default(now())
+  question        Question @relation(fields: [questionId], references: [id])
+}
+
+model QaHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  question  String
+  answer    String
+  createdAt DateTime @default(now())
+}
+
+model Bookmark {
+  id              String   @id @default(uuid())
+  userId          String
+  question        String
+  answer          String
+  structure       Json?
+  followUps       String[]
+  insight         String?
+  followUpThreads Json?
+  createdAt       DateTime @default(now())
+}
