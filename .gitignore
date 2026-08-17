@@ -4,3 +4,6 @@ dist/
 *.log
 uploads/
 .DS_Store
+deploy/
+scripts/*.tar.gz
+*.tsbuildinfo
