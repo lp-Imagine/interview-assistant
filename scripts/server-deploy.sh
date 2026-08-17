@@ -53,9 +53,9 @@ if ! command -v pm2 >/dev/null 2>&1; then
   npm install -g pm2
 fi
 
-pm2 start packages/backend/dist/main.js \
+pm2 start "$ROOT/packages/backend/dist/main.js" \
   --name ai-interview-backend \
-  --cwd "$ROOT/packages/backend" \
+  --cwd "$ROOT" \
   --time || true
 pm2 save
 
