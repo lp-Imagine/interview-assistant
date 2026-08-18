@@ -9,7 +9,12 @@
 
       <div v-if="loading" class="settings-loading">加载中...</div>
 
-      <form v-else class="settings-form" @submit.prevent="onSave">
+      <form
+        id="settings-form"
+        v-else
+        class="settings-form"
+        @submit.prevent="onSave"
+      >
         <fieldset>
           <legend>LLM（问答 / 题目生成）</legend>
 
@@ -90,22 +95,22 @@
           </label>
         </fieldset>
 
-        <div class="settings-actions">
-          <button type="submit" :disabled="saving">
-            {{ saving ? "保存中..." : "保存配置" }}
-          </button>
-        </div>
-
-        <p v-if="message" class="settings-message" :class="{ error: isError }">
-          {{ message }}
-        </p>
-
         <p class="settings-warn">
           ⚠️ API Key 会明文保存到服务器
           <code>.env</code> 文件；请勿在多人共享环境中随意修改。
           密钥输入框留空表示不修改（页面只显示脱敏后的当前值）。
         </p>
       </form>
+
+      <!-- 固定右下角的保存按钮，避免长表单下被遮挡 -->
+      <div class="settings-actions">
+        <p v-if="message" class="settings-message" :class="{ error: isError }">
+          {{ message }}
+        </p>
+        <button type="submit" form="settings-form" :disabled="saving">
+          {{ saving ? "保存中..." : "保存配置" }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -188,6 +193,8 @@ onMounted(load);
 .settings-form {
   display: grid;
   gap: 18px;
+  /* 给固定右下角的保存按钮留空间，避免遮挡最后字段 */
+  padding-bottom: 88px;
 }
 .settings-form fieldset {
   border: 1px solid var(--border-color, #eee);
@@ -226,14 +233,27 @@ onMounted(load);
   color: #aaa;
   font-size: 12px;
 }
+.settings-actions {
+  position: fixed;
+  right: 28px;
+  bottom: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 56px);
+}
 .settings-actions button {
-  padding: 10px 22px;
+  padding: 12px 28px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 10px;
   background: var(--primary, #3b82f6);
   color: #fff;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+  white-space: nowrap;
 }
 .settings-actions button:disabled {
   opacity: 0.6;
@@ -242,6 +262,9 @@ onMounted(load);
 .settings-message {
   font-size: 13px;
   color: var(--success, #16a34a);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 10px;
+  border-radius: 8px;
 }
 .settings-message.error {
   color: var(--error, #dc2626);
