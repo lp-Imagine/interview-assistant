@@ -88,7 +88,7 @@
               </svg>
             </span>
             <span
-              v-if="bookmarkedQuestions.has(q.title)"
+              v-if="bookmarkedQuestions?.has(q.title)"
               class="bookmark-dot"
               title="已收藏"
             >

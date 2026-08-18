@@ -30,7 +30,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   const insight = ref("");
   const isStreaming = ref(false);
   const currentSection = ref<
-    "answer" | "structure" | "followUps" | "insight" | ""
+    "answer" | "structure" | "followUps" | "insight" | "done" | "error" | ""
   >("");
   const activeQuestionId = ref<string | null>(null);
   const followUpThreads = ref<FollowUpThread[]>([]);

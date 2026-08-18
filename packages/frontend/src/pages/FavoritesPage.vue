@@ -150,7 +150,7 @@
                       <div
                         v-if="getThreadAnswer(v, f) && expandedFollowUps.has(i)"
                         class="follow-answer md-content"
-                        v-html="md.render(getThreadAnswer(v, f))"
+                        v-html="md.render(getThreadAnswer(v, f) ?? '')"
                       ></div>
                     </div>
                   </div>

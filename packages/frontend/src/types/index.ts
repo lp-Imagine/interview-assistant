@@ -1,22 +1,27 @@
-export enum DocumentType {
-  RESUME = "RESUME",
-  JD = "JD",
-  INTERVIEW_EXP = "INTERVIEW_EXP",
-}
+export const DocumentType = {
+  RESUME: "RESUME",
+  JD: "JD",
+  INTERVIEW_EXP: "INTERVIEW_EXP",
+} as const;
+export type DocumentType = (typeof DocumentType)[keyof typeof DocumentType];
 
-export enum DocumentStatus {
-  UPLOADED = "UPLOADED",
-  PROCESSING = "PROCESSING",
-  COMPLETED = "COMPLETED",
-  FAILED = "FAILED",
-}
+export const DocumentStatus = {
+  UPLOADED: "UPLOADED",
+  PROCESSING: "PROCESSING",
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+} as const;
+export type DocumentStatus =
+  (typeof DocumentStatus)[keyof typeof DocumentStatus];
 
-export enum QuestionCategory {
-  FUNDAMENTAL = "FUNDAMENTAL",
-  PROJECT = "PROJECT",
-  SCENARIO = "SCENARIO",
-  COMPREHENSIVE = "COMPREHENSIVE",
-}
+export const QuestionCategory = {
+  FUNDAMENTAL: "FUNDAMENTAL",
+  PROJECT: "PROJECT",
+  SCENARIO: "SCENARIO",
+  COMPREHENSIVE: "COMPREHENSIVE",
+} as const;
+export type QuestionCategory =
+  (typeof QuestionCategory)[keyof typeof QuestionCategory];
 
 export const QuestionCategoryLabel: Record<QuestionCategory, string> = {
   [QuestionCategory.FUNDAMENTAL]: "基础八股",

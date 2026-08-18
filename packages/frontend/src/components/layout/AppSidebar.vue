@@ -99,7 +99,12 @@ function onClick(path: string) {
   emit("navigate");
 }
 
-const mainMenu = [
+const mainMenu: Array<{
+  label: string;
+  path: string;
+  icon: string;
+  badge?: string;
+}> = [
   {
     label: "首页",
     path: "/",

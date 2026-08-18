@@ -17,8 +17,7 @@ const md = new MarkdownIt({
 });
 
 // Custom fence renderer with copy button
-const defaultFence = md.renderer.rules.fence!;
-md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+md.renderer.rules.fence = (tokens, idx) => {
   const token = tokens[idx];
   const lang = token.info.trim();
   const code = token.content;

@@ -16,7 +16,6 @@
       ></div>
 
       <QuestionPanel
-        ref="questionPanelRef"
         :class="{ 'panel-overlay-open': questionPanelOpen }"
         :docs-loading="docsStore.isLoading"
         :bookmarked-questions="bookmarkedQuestions"
@@ -49,7 +48,6 @@ const questionsStore = useQuestionsStore();
 const workspaceStore = useWorkspaceStore();
 const docsStore = useDocumentsStore();
 
-const questionPanelRef = ref<InstanceType<typeof QuestionPanel> | null>(null);
 const questionPanelOpen = ref(false);
 const bookmarks = ref<Bookmark[]>([]);
 const bookmarkedQuestions = computed(
@@ -64,7 +62,7 @@ async function loadBookmarks() {
   }
 }
 
-function onSelect(id: string) {
+function onSelect() {
   questionPanelOpen.value = false;
   const q = questionsStore.currentQuestion;
   if (q) {
