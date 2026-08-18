@@ -16,6 +16,12 @@ export interface SpeechOptions {
 let currentAudio: HTMLAudioElement | null = null;
 let currentUtterance: SpeechSynthesisUtterance | null = null;
 
+/** 从 localStorage 取 JWT，构造鉴权头（voice 用原生 fetch，需手动带 token） */
+function authHeaders(): Record<string, string> {
+  const token = localStorage.getItem("access_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 /** 选一个中文语音（浏览器回退用） */
 function pickChineseVoice(): SpeechSynthesisVoice | undefined {
   const voices = window.speechSynthesis?.getVoices() ?? [];
@@ -48,7 +54,10 @@ async function speakViaVolcano(
   try {
     const res = await fetch("/api/voice/tts", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+      },
       body: JSON.stringify({ text }),
     });
     if (!res.ok) return false;
@@ -257,7 +266,10 @@ export async function transcribeAudio(
         : "wav";
     const res = await fetch("/api/voice/asr", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders(),
+      },
       body: JSON.stringify({ audio: base64, format }),
     });
     const json = (await res.json()) as {
