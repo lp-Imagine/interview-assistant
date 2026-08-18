@@ -20,10 +20,10 @@ SCHEMA="packages/backend/prisma/schema.prisma"
 # 前端站点根目录（宝塔建站目录），可用环境变量覆盖
 SITE_ROOT="${SITE_ROOT:-/www/wwwroot/interview.draftly.cn}"
 
-echo "==> [1/6] 拉取最新代码"
+echo "==> [1/7] 拉取最新代码"
 git pull
 
-echo "==> [2/6] 安装依赖 (npm ci)"
+echo "==> [2/7] 安装依赖 (npm ci)"
 npm ci
 
 # 记录更新前后的 schema 是否变化（决定是否需要建表）
@@ -34,7 +34,7 @@ else
   SCHEMA_CHANGED=true
 fi
 
-echo "==> [3/6] 数据库迁移（仅在 schema 变化时执行）"
+echo "==> [3/7] 数据库迁移（仅在 schema 变化时执行）"
 set -a
 # shellcheck disable=SC1091
 source .env
@@ -48,16 +48,19 @@ else
   echo "  schema 无变化，跳过"
 fi
 
-echo "==> [4/6] 构建前端并部署到站点"
+echo "==> [4/7] 生成 Prisma Client（npm ci 后类型需与 schema 同步）"
+npx prisma generate --schema "$SCHEMA"
+
+echo "==> [5/7] 构建前端并部署到站点"
 npm run build:frontend 2>/dev/null || (cd packages/frontend && npx vite build)
 mkdir -p "$SITE_ROOT"
 cp -r packages/frontend/dist/. "$SITE_ROOT/"
 echo "  前端已更新: $SITE_ROOT"
 
-echo "==> [5/6] 构建后端"
+echo "==> [6/7] 构建后端"
 npm run build:backend
 
-echo "==> [6/6] 重启后端"
+echo "==> [7/7] 重启后端"
 pm2 restart ai-interview-backend --update-env || true
 pm2 save
 
