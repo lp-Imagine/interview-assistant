@@ -195,8 +195,20 @@ export class GenerationService {
     batchSize: number,
     batchIndex: number,
   ): Promise<GeneratedQuestion[]> {
-    const openai = this.getOpenAI();
     const model = process.env.LLM_MODEL || "deepseek-chat";
+
+    // 未配置大模型密钥：直接走内置题库，避免 new OpenAI() 抛错导致 500
+    if (!process.env.LLM_API_KEY) {
+      this.logger.warn("LLM_API_KEY not set, using fallback question bank");
+      return this.generateFallbackQuestions(
+        context,
+        existingTitles,
+        batchSize,
+        batchIndex,
+      );
+    }
+
+    const openai = this.getOpenAI();
 
     const existingList = existingTitles.length
       ? `\n已生成的部分题目（仅作参考，请围绕不同角度出题，不要重复）：\n${existingTitles.slice(-20).join("\n")}`
