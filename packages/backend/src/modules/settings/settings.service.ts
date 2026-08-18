@@ -92,10 +92,16 @@ export class SettingsService {
   scheduleRestart(pm2Name: string): void {
     setTimeout(() => {
       try {
-        spawn("pm2", ["restart", pm2Name], {
+        const child = spawn("pm2", ["restart", pm2Name], {
           detached: true,
           stdio: "ignore",
-        }).unref();
+        });
+        // 必须监听 error：pm2 不存在（如本地开发环境）时 spawn 触发
+        // 'error' 事件（ENOENT），不监听会变成 unhandled error 直接崩掉进程
+        child.on("error", () => {
+          // 静默失败，不阻塞响应；本地开发改 .env 后需手动重启后端
+        });
+        child.unref();
       } catch {
         // 重启失败不阻塞响应，前端提示手动重启
       }
