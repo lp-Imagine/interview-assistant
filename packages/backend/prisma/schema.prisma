@@ -109,3 +109,31 @@ model Bookmark {
   followUpThreads Json?
   createdAt       DateTime @default(now())
 }
+
+model InterviewSession {
+  id            String          @id @default(uuid())
+  userId        String
+  status        String          @default("active") // active | done
+  totalQuestions Int            @default(3)
+  currentIndex  Int             @default(0)
+  topic         String?
+  summary       String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  turns         InterviewTurn[]
+
+  @@index([userId])
+}
+
+model InterviewTurn {
+  id           String           @id @default(uuid())
+  sessionId    String
+  index        Int
+  question     String
+  answer       String?
+  feedback     String?
+  createdAt    DateTime         @default(now())
+  session      InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}

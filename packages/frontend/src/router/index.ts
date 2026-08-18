@@ -46,6 +46,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: "/interview",
+      name: "interview",
+      component: () => import("../pages/MockInterviewPage.vue"),
+      meta: { requiresAuth: true },
+    },
+    {
       path: "/settings",
       name: "settings",
       component: () => import("../pages/SettingsPage.vue"),
