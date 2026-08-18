@@ -54,6 +54,12 @@ export class SettingsService {
   /** 返回可编辑配置，密钥脱敏 */
   readMasked(): Record<string, string> {
     const map = this.readMap();
+    // 同步到运行时环境：本地 nest watch 不重载 .env，GET 时兜底注入，
+    // 保证 qa/generation 等读 process.env 的模块能拿到最新值（服务器
+    // pm2 restart 重新读 .env，此注入为幂等无害）
+    for (const [k, v] of Object.entries(map)) {
+      if (v !== undefined) process.env[k] = v;
+    }
     const out: Record<string, string> = {};
     for (const key of EDITABLE_KEYS) {
       const value = map[key] ?? "";
@@ -83,6 +89,8 @@ export class SettingsService {
       const line = `${key}=${map[key]}`;
       const re = new RegExp(`^${key}=.*$`, "m");
       out = re.test(out) ? out.replace(re, line) : `${out}\n${line}\n`;
+      // 保存即生效：注入运行时环境（本地无 pm2 重启也能立刻读到）
+      process.env[key] = map[key];
     }
     writeFileSync(this.resolveEnvFile(), out);
     return changed;
