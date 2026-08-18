@@ -214,6 +214,9 @@ export class VoiceController {
         },
       );
       const submitJson = await submitRes.json().catch(() => ({}));
+      this.logger.log(
+        `ASR submit: ${JSON.stringify(submitJson).slice(0, 300)}`,
+      );
       if (
         !submitRes.ok ||
         (submitJson.code !== undefined && submitJson.code !== 0)
@@ -239,6 +242,11 @@ export class VoiceController {
         );
         const queryJson = await queryRes.json().catch(() => ({}));
         const code = queryJson.code;
+        if (i === 0 || code !== 1) {
+          this.logger.log(
+            `ASR query[${i}]: ${JSON.stringify(queryJson).slice(0, 250)}`,
+          );
+        }
         // 0=成功，1=进行中/排队；4 等=失败
         if (code === 0) {
           const utterance = queryJson.result?.[0];
