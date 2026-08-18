@@ -219,6 +219,15 @@ ${contextText}${historyText}
 
   // ── Public: main entry ──
 
+  private sendConfigHint(res: Response, reason?: string): void {
+    this.sendEvent(res, {
+      type: "answer",
+      content: `⚠️ ${reason ?? "大模型 API Key 未配置"}。请到左侧「设置」页填写 LLM_API_KEY（以及 Base URL / 模型名），保存后约 5 秒生效，再回来重新提问。`,
+    });
+    this.sendEvent(res, { type: "done", content: "" });
+    res.end();
+  }
+
   async streamAnswer(
     userId: string,
     question: string,
@@ -227,6 +236,12 @@ ${contextText}${historyText}
     questionId?: string,
     history?: Array<{ role: string; content: string }>,
   ) {
+    // 未配置大模型密钥：不假装回答，明确引导去设置页
+    if (!process.env.LLM_API_KEY) {
+      this.sendConfigHint(res);
+      return;
+    }
+
     const ctx: StreamContext = {
       userId,
       question,
@@ -255,12 +270,8 @@ ${contextText}${historyText}
       await this.streamLLM(prompt, ctx);
     } catch (err: any) {
       this.logger.error("LLM call failed: " + err.message);
-      this.sendEvent(res, {
-        type: "answer",
-        content: `${question} 是一个很好的面试问题。我建议从以下几个方面来准备：首先，理解其核心概念和原理；其次，结合实际项目经验说明应用场景；最后，思考相关的优化和扩展方案。`,
-      });
-      this.sendEvent(res, { type: "done" });
-      res.end();
+      // 不再返回模板化假回答，改为明确错误提示
+      this.sendConfigHint(res, `大模型调用失败：${err.message}`);
     }
   }
 
