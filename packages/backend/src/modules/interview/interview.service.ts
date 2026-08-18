@@ -72,14 +72,22 @@ export class InterviewService {
 
     let lastError: unknown;
     for (let attempt = 0; attempt < 2; attempt++) {
+      const startedAt = Date.now();
       try {
-        const response = await openai.chat.completions.create({
-          model,
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0.8,
-          max_tokens: 1200,
-          response_format: { type: "json_object" },
-        });
+        // 火山 LLM 生成点评可能较慢，设 90s 超时，避免前端无限等待
+        const response = await openai.chat.completions.create(
+          {
+            model,
+            messages: [{ role: "user", content: prompt }],
+            temperature: 0.8,
+            max_tokens: 1200,
+            response_format: { type: "json_object" },
+          },
+          { timeout: 90_000 },
+        );
+        this.logger.log(
+          `Interview LLM ok in ${Date.now() - startedAt}ms (attempt ${attempt + 1})`,
+        );
         const content = response.choices[0].message.content?.trim() ?? "";
         // 容忍 markdown 围栏包裹的 JSON
         const stripped = content
