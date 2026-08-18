@@ -289,6 +289,9 @@
               </svg>
               请开始回答（说完自动识别，或点击停止）
             </template>
+            <template v-else-if="state === 'transcribing'">
+              <span class="spinner"></span>正在识别你的语音…
+            </template>
             <template v-else-if="state === 'thinking'">
               <span class="spinner"></span>面试官正在思考你的回答…
             </template>
@@ -395,6 +398,7 @@ type InterviewState =
   | "loading"
   | "asking"
   | "listening"
+  | "transcribing"
   | "thinking"
   | "done";
 
@@ -428,6 +432,8 @@ const statusText = computed(() => {
       return "面试官提问中";
     case "listening":
       return "轮到你回答";
+    case "transcribing":
+      return "语音识别中";
     case "thinking":
       return "面试官点评中";
     case "done":
@@ -502,7 +508,8 @@ function toggleMic() {
     },
     onStop: (blob) => {
       micActive.value = false;
-      state.value = "thinking";
+      // 转写中（区别于 thinking：此时回答尚未提交，AI 还没在点评）
+      state.value = "transcribing";
       void transcribeAudio(blob, {
         onError: (message) => {
           micError.value = message;
@@ -510,6 +517,8 @@ function toggleMic() {
         },
       }).then((text) => {
         if (text) {
+          // 回到 listening 再提交（submitAnswer 要求此状态），随后内部转 thinking
+          state.value = "listening";
           submitAnswer(text);
         } else {
           state.value = "listening";
@@ -968,6 +977,12 @@ function resetInterview() {
   color: #15803d;
   background: rgba(34, 197, 94, 0.08);
   border-color: rgba(34, 197, 94, 0.22);
+}
+
+.state-bar.transcribing {
+  color: #2563eb;
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .state-bar.thinking {
