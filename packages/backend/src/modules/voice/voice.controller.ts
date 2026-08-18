@@ -247,16 +247,21 @@ export class VoiceController {
             `ASR query[${i}]: ${JSON.stringify(queryJson).slice(0, 250)}`,
           );
         }
-        // 0=成功，1=进行中/排队；4 等=失败
-        if (code === 0) {
-          const utterance = queryJson.result?.[0];
-          text = String(
-            (typeof utterance === "string" ? utterance : utterance?.text) ||
-              queryJson.text ||
-              "",
-          ).trim();
-          if (text) break;
-        } else if (code !== undefined && code !== 0 && code !== 1) {
+        // result 可能是对象 {text} 或数组 [{text}]；code 可能缺失
+        const result = queryJson.result;
+        const candidate =
+          typeof result === "string"
+            ? result
+            : Array.isArray(result)
+              ? (result[0]?.text ?? "")
+              : (result?.text ?? "");
+        const candidateText = String(candidate || queryJson.text || "").trim();
+        if (candidateText) {
+          text = candidateText;
+          break;
+        }
+        // 明确失败码（非 0/1）才中断；否则继续轮询
+        if (code !== undefined && code !== 0 && code !== 1) {
           this.logger.warn(`ASR query failed code=${code}`);
           break;
         }
