@@ -113,10 +113,8 @@ export class VoiceController {
     if (text.length > 500)
       throw new BadRequestException("text 过长（最多 500 字）");
 
-    const resourceId = this.readEnv("TTS_RESOURCE_ID") || "seed-tts-2.0";
-    // seed-tts-2.0 的经典音色（旧版 zh_female_xiaohe 与 resource 不匹配）
-    const speaker =
-      this.readEnv("TTS_SPEAKER") || "zh_female_cancan_uranus_bigtts";
+    const resourceId = this.readEnv("TTS_RESOURCE_ID") || "volc.seedtts.auc";
+    const speaker = this.readEnv("TTS_SPEAKER") || "zh_female_xiaohe";
     const headers = this.voiceHeaders(resourceId);
 
     const payload = {
