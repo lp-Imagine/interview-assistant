@@ -6,19 +6,27 @@ import {
   Logger,
 } from "@nestjs/common";
 import { readFileSync, existsSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { dirname, join } from "node:path";
 
 interface TtsResult {
-  /** base64 编码的音频（mp3） */
   base64: string;
   format: string;
 }
 
+/**
+ * 豆包语音（火山语音技术平台）：
+ * - TTS 合成: POST https://openspeech.bytedance.com/api/v3/tts/unidirectional/sse
+ *   鉴权: X-Api-Key（语音平台独立 key，非 ark LLM key）+ X-Api-Resource-Id
+ *   resource: seed-tts-2.0
+ * - ASR 识别: POST https://openspeech.bytedance.com/api/v3/auc/bigmodel/recognize/flash
+ *   resource: volc.bigasr.auc_turbo
+ * 控制台开通/拿 key: https://console.volcengine.com/speech
+ */
 @Controller("voice")
 export class VoiceController {
   private readonly logger = new Logger("VoiceController");
 
-  /** 定位项目根目录 .env（与 settings 模块一致） */
   private resolveEnvFile(): string {
     let dir = process.cwd();
     for (let i = 0; i < 6; i++) {
@@ -31,7 +39,6 @@ export class VoiceController {
     return join(__dirname, "../../../.env");
   }
 
-  /** 从 .env 读取配置（进程环境未注入时兜底） */
   private readEnv(key: string): string | undefined {
     const val = process.env[key];
     if (val) return val;
@@ -44,7 +51,24 @@ export class VoiceController {
     }
   }
 
-  /** 火山方舟 TTS：语音合成（与 LLM 共用 ark key） */
+  /** 火山语音平台鉴权头（X-Api-Key + resource） */
+  private voiceHeaders(resourceId: string): Record<string, string> {
+    const apiKey = this.readEnv("VOICE_API_KEY");
+    if (!apiKey) {
+      throw new BadRequestException(
+        "VOICE_API_KEY 未配置：请到设置页填写火山语音平台 API Key（console.volcengine.com/speech）",
+      );
+    }
+    return {
+      "Content-Type": "application/json",
+      "X-Api-Key": apiKey,
+      "X-Api-Resource-Id": resourceId,
+      "X-Api-Request-Id": randomUUID(),
+      "X-Api-Sequence": "-1",
+    };
+  }
+
+  /** TTS：语音合成（豆包语音，SSE 返回 mp3 base64） */
   @Post("tts")
   async tts(
     @Body() body: { text?: string },
@@ -54,65 +78,57 @@ export class VoiceController {
     if (text.length > 500)
       throw new BadRequestException("text 过长（最多 500 字）");
 
-    const apiKey = this.readEnv("LLM_API_KEY");
-    if (!apiKey)
-      throw new BadRequestException("LLM_API_KEY 未配置，无法使用语音合成");
+    const resourceId = this.readEnv("TTS_RESOURCE_ID") || "seed-tts-2.0";
+    const speaker = this.readEnv("TTS_SPEAKER") || "zh_female_xiaohe";
+    const headers = this.voiceHeaders(resourceId);
 
-    const model = this.readEnv("TTS_MODEL") || "doubao-tts-seed-240628";
-    const voiceType = this.readEnv("TTS_VOICE") || "zh_female_xiaohe";
-    const baseUrl = this.readEnv("LLM_BASE_URL") || "";
-    // ark 方舟的 TTS 端点；非火山端点时返回错误让前端回退浏览器语音
-    const ttsUrl = /ark\.cn-beijing\.volces\.com/i.test(baseUrl)
-      ? baseUrl.replace(/\/+$/, "") + "/tts"
-      : this.readEnv("TTS_BASE_URL");
-
-    this.logger.log(
-      `TTS baseUrl=${baseUrl || "(empty)"} ttsUrl=${ttsUrl || "(none)"}`,
-    );
-
-    if (!ttsUrl) {
-      throw new BadRequestException(
-        "当前 LLM 非火山方舟，无法使用火山语音合成",
-      );
-    }
+    const payload = {
+      text,
+      speaker,
+      audio_format: "mp3",
+      sample_rate: 24000,
+      speed_ratio: 1.0,
+    };
 
     try {
-      const res = await fetch(ttsUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+      const res = await fetch(
+        "https://openspeech.bytedance.com/api/v3/tts/unidirectional/sse",
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify({
-          model,
-          input: text,
-          voice_type: voiceType,
-          response_format: "mp3",
-          speed_ratio: 1.0,
-        }),
-      });
-
+      );
       if (!res.ok) {
-        const errText = (await res.text()).slice(0, 300);
-        this.logger.warn(`TTS failed ${res.status}: ${errText}`);
-        throw new BadRequestException(`语音合成失败（${res.status}）`);
+        const err = (await res.text()).slice(0, 300);
+        this.logger.warn(`TTS failed ${res.status}: ${err}`);
+        throw new BadRequestException(
+          `语音合成失败（${res.status}）：请确认已开通豆包语音合成并在设置页填 VOICE_API_KEY`,
+        );
       }
 
-      const contentType = res.headers.get("content-type") || "";
-      const buf = Buffer.from(await res.arrayBuffer());
-
-      // ark 通常返回 JSON { data: { audio: base64 } }
-      if (contentType.includes("application/json")) {
-        const json = JSON.parse(buf.toString("utf-8"));
-        const audio = json?.data?.audio ?? json?.audio;
-        if (typeof audio === "string" && audio) {
-          return { ok: true, base64: audio, format: "mp3" };
+      const raw = await res.text();
+      // SSE 解析：data: {"audio":"base64","duration":..} 分片 → 拼接
+      const audioParts: string[] = [];
+      for (const line of raw.split("\n")) {
+        if (!line.startsWith("data:")) continue;
+        const jsonText = line.slice(5).trim();
+        if (!jsonText || jsonText === "[DONE]") continue;
+        try {
+          const evt = JSON.parse(jsonText);
+          if (typeof evt?.audio === "string" && evt.audio) {
+            audioParts.push(evt.audio);
+          }
+        } catch {
+          /* 忽略非 JSON 行 */
         }
-        throw new BadRequestException("语音合成响应缺少音频数据");
       }
-
-      // 也可能是原始二进制音频
-      return { ok: true, base64: buf.toString("base64"), format: "mp3" };
+      if (!audioParts.length) {
+        throw new BadRequestException(
+          "语音合成未返回音频（请检查音色/开通状态）",
+        );
+      }
+      return { ok: true, base64: audioParts.join(""), format: "mp3" };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       const message = error instanceof Error ? error.message : "语音合成失败";
@@ -121,7 +137,7 @@ export class VoiceController {
     }
   }
 
-  /** 火山方舟 ASR：语音识别（录音 → 文字，国内可用） */
+  /** ASR：语音识别（极速版，同步返回） */
   @Post("asr")
   async asr(
     @Body() body: { audio?: string; format?: string },
@@ -131,71 +147,47 @@ export class VoiceController {
     if (audio.length > 8_000_000)
       throw new BadRequestException("音频过大（最多约 6MB）");
 
-    const apiKey = this.readEnv("LLM_API_KEY");
-    if (!apiKey)
-      throw new BadRequestException("LLM_API_KEY 未配置，无法使用语音识别");
+    const resourceId =
+      this.readEnv("ASR_RESOURCE_ID") || "volc.bigasr.auc_turbo";
+    const headers = this.voiceHeaders(resourceId);
 
-    const model = this.readEnv("ASR_MODEL") || "doubao-asr-1-240826";
-    const baseUrl = this.readEnv("LLM_BASE_URL") || "";
-    const asrUrl = /ark\.cn-beijing\.volces\.com/i.test(baseUrl)
-      ? baseUrl.replace(/\/+$/, "") + "/audio/asr"
-      : this.readEnv("ASR_BASE_URL");
-    if (!asrUrl)
-      throw new BadRequestException(
-        "当前 LLM 非火山方舟，无法使用火山语音识别",
-      );
-
-    // ark 多模态语音识别：content 内嵌 base64 音频
-    const mime =
-      body.format === "wav"
-        ? "audio/wav"
-        : body.format === "mp3"
-          ? "audio/mpeg"
-          : "audio/wav";
+    const format =
+      body.format === "mp4" ? "mp4" : body.format === "ogg" ? "ogg" : "wav";
     const payload = {
-      model,
-      content: [
-        {
-          type: "audio",
-          audio_url: `data:${mime};base64,${audio}`,
-        },
-      ],
+      user: { uid: "dsh-interview" },
+      audio: { format, data: audio },
+      request: {
+        model_name: "bigmodel",
+        enable_itn: true,
+        show_utterances: false,
+      },
     };
 
     try {
-      const res = await fetch(asrUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+      const res = await fetch(
+        "https://openspeech.bytedance.com/api/v3/auc/bigmodel/recognize/flash",
+        {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
-
+      );
       if (!res.ok) {
-        const errText = (await res.text()).slice(0, 300);
-        this.logger.warn(`ASR failed ${res.status}: ${errText}`);
-        throw new BadRequestException(`语音识别失败（${res.status}）`);
+        const err = (await res.text()).slice(0, 300);
+        this.logger.warn(`ASR failed ${res.status}: ${err}`);
+        throw new BadRequestException(
+          `语音识别失败（${res.status}）：请确认已开通语音识别并在设置页填 VOICE_API_KEY`,
+        );
       }
 
       const json = await res.json();
-      // ark 返回 content 数组，取纯文本
-      const contents = json?.content ?? json?.choices?.[0]?.message?.content;
-      let text = "";
-      if (typeof contents === "string") {
-        text = contents;
-      } else if (Array.isArray(contents)) {
-        text = contents
-          .map((c: any) => (typeof c === "string" ? c : (c?.text ?? "")))
-          .join("");
-      } else if (typeof json?.text === "string") {
-        text = json.text;
-      }
-      const cleaned = text.trim();
-      if (!cleaned)
-        throw new BadRequestException(
-          "语音识别未返回内容（可能未开通语音模型）",
-        );
+      const utterance = json?.result?.[0];
+      const text =
+        (typeof utterance === "string" ? utterance : utterance?.text) ||
+        json?.text ||
+        "";
+      const cleaned = String(text).trim();
+      if (!cleaned) throw new BadRequestException("语音识别未返回内容");
       return { ok: true, text: cleaned };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;

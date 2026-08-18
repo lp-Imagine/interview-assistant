@@ -84,26 +84,40 @@
         </fieldset>
 
         <fieldset>
-          <legend>语音（模拟面试 TTS / ASR）</legend>
+          <legend>语音（模拟面试 TTS / ASR，火山语音技术平台）</legend>
 
           <label>
-            <span>语音合成模型（TTS_MODEL，火山方舟 doubao-tts）</span>
+            <span>火山语音 API Key（VOICE_API_KEY）</span>
             <input
-              v-model="form.TTS_MODEL"
-              placeholder="如 doubao-tts-seed-240628，留空则回退浏览器语音"
+              v-model="form.VOICE_API_KEY"
+              type="password"
+              autocomplete="off"
+              placeholder="留空则不修改"
+            />
+            <small v-if="current.VOICE_API_KEY"
+              >当前：{{ current.VOICE_API_KEY }}</small
+            >
+            <small>开通/获取：console.volcengine.com/speech（豆包语音）</small>
+          </label>
+
+          <label>
+            <span>语音合成音色（TTS_SPEAKER）</span>
+            <input
+              v-model="form.TTS_SPEAKER"
+              placeholder="如 zh_female_xiaohe"
             />
           </label>
 
           <label>
-            <span>语音合成音色（TTS_VOICE）</span>
-            <input v-model="form.TTS_VOICE" placeholder="如 zh_female_xiaohe" />
+            <span>语音合成 Resource ID（TTS_RESOURCE_ID，一般不用改）</span>
+            <input v-model="form.TTS_RESOURCE_ID" placeholder="seed-tts-2.0" />
           </label>
 
           <label>
-            <span>语音识别模型（ASR_MODEL，火山方舟 doubao-asr）</span>
+            <span>语音识别 Resource ID（ASR_RESOURCE_ID，一般不用改）</span>
             <input
-              v-model="form.ASR_MODEL"
-              placeholder="如 doubao-asr-1-240826，留空则语音识别不可用"
+              v-model="form.ASR_RESOURCE_ID"
+              placeholder="volc.bigasr.auc_turbo"
             />
           </label>
         </fieldset>
@@ -160,9 +174,10 @@ const FIELD_LABELS: Record<string, string> = {
   EMBEDDING_API_KEY: "Embedding API Key",
   EMBEDDING_BASE_URL: "Embedding Base URL",
   EMBEDDING_MODEL: "Embedding 模型",
-  TTS_MODEL: "语音合成模型",
-  TTS_VOICE: "语音合成音色",
-  ASR_MODEL: "语音识别模型",
+  VOICE_API_KEY: "火山语音 API Key",
+  TTS_SPEAKER: "语音合成音色",
+  TTS_RESOURCE_ID: "TTS Resource ID",
+  ASR_RESOURCE_ID: "ASR Resource ID",
   CORS_ORIGINS: "CORS_ORIGINS",
 };
 
@@ -174,7 +189,12 @@ async function load() {
     // 密钥字段保持留空（脱敏值不能当真实 key 提交，留空=不修改）
     const next: Record<string, string> = {};
     for (const [key, value] of Object.entries(current.value)) {
-      if (key === "LLM_API_KEY" || key === "EMBEDDING_API_KEY") continue;
+      if (
+        key === "LLM_API_KEY" ||
+        key === "EMBEDDING_API_KEY" ||
+        key === "VOICE_API_KEY"
+      )
+        continue;
       next[key] = value ?? "";
     }
     form.value = next;

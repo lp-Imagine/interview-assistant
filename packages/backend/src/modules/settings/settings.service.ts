@@ -11,14 +11,19 @@ export const EDITABLE_KEYS = [
   "EMBEDDING_API_KEY",
   "EMBEDDING_BASE_URL",
   "EMBEDDING_MODEL",
-  "TTS_MODEL",
-  "TTS_VOICE",
-  "ASR_MODEL",
+  "VOICE_API_KEY",
+  "TTS_RESOURCE_ID",
+  "TTS_SPEAKER",
+  "ASR_RESOURCE_ID",
   "CORS_ORIGINS",
 ] as const;
 
 /** 需要脱敏展示的密钥字段 */
-const SECRET_KEYS = new Set(["LLM_API_KEY", "EMBEDDING_API_KEY"]);
+const SECRET_KEYS = new Set([
+  "LLM_API_KEY",
+  "EMBEDDING_API_KEY",
+  "VOICE_API_KEY",
+]);
 
 function mask(value: string): string {
   if (value.length <= 8) return "****";
