@@ -84,6 +84,31 @@
         </fieldset>
 
         <fieldset>
+          <legend>语音（模拟面试 TTS / ASR）</legend>
+
+          <label>
+            <span>语音合成模型（TTS_MODEL，火山方舟 doubao-tts）</span>
+            <input
+              v-model="form.TTS_MODEL"
+              placeholder="如 doubao-tts-seed-240628，留空则回退浏览器语音"
+            />
+          </label>
+
+          <label>
+            <span>语音合成音色（TTS_VOICE）</span>
+            <input v-model="form.TTS_VOICE" placeholder="如 zh_female_xiaohe" />
+          </label>
+
+          <label>
+            <span>语音识别模型（ASR_MODEL，火山方舟 doubao-asr）</span>
+            <input
+              v-model="form.ASR_MODEL"
+              placeholder="如 doubao-asr-1-240826，留空则语音识别不可用"
+            />
+          </label>
+        </fieldset>
+
+        <fieldset>
           <legend>其他</legend>
 
           <label>
@@ -135,6 +160,9 @@ const FIELD_LABELS: Record<string, string> = {
   EMBEDDING_API_KEY: "Embedding API Key",
   EMBEDDING_BASE_URL: "Embedding Base URL",
   EMBEDDING_MODEL: "Embedding 模型",
+  TTS_MODEL: "语音合成模型",
+  TTS_VOICE: "语音合成音色",
+  ASR_MODEL: "语音识别模型",
   CORS_ORIGINS: "CORS_ORIGINS",
 };
 

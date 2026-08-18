@@ -11,6 +11,9 @@ export const EDITABLE_KEYS = [
   "EMBEDDING_API_KEY",
   "EMBEDDING_BASE_URL",
   "EMBEDDING_MODEL",
+  "TTS_MODEL",
+  "TTS_VOICE",
+  "ASR_MODEL",
   "CORS_ORIGINS",
 ] as const;
 
