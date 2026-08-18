@@ -101,16 +101,17 @@
           密钥输入框留空表示不修改（页面只显示脱敏后的当前值）。
         </p>
       </form>
+    </div>
 
-      <!-- 固定右下角的保存按钮，避免长表单下被遮挡 -->
-      <div class="settings-actions">
-        <p v-if="message" class="settings-message" :class="{ error: isError }">
-          {{ message }}
-        </p>
-        <button type="submit" form="settings-form" :disabled="saving">
-          {{ saving ? "保存中..." : "保存配置" }}
-        </button>
-      </div>
+    <!-- 固定右下角的保存按钮（必须在 .card 外：.card:hover 的 transform
+         会破坏 fixed 的视口定位，导致鼠标滑到卡片时按钮消失） -->
+    <div class="settings-actions">
+      <p v-if="message" class="settings-message" :class="{ error: isError }">
+        {{ message }}
+      </p>
+      <button type="submit" form="settings-form" :disabled="saving">
+        {{ saving ? "保存中..." : "保存配置" }}
+      </button>
     </div>
   </div>
 </template>
@@ -180,6 +181,12 @@ onMounted(load);
 </script>
 
 <style scoped>
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--content-padding);
+  box-sizing: border-box;
+}
 .settings-hint {
   color: var(--text-secondary, #999);
   font-size: 13px;
