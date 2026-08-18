@@ -14,6 +14,41 @@ interface TtsResult {
   format: string;
 }
 
+/** 从 SSE 事件 JSON 里提取 audio base64（兼容多层嵌套） */
+function extractAudioField(jsonText: string): string {
+  try {
+    const obj = JSON.parse(jsonText);
+    const walk = (n: any): string | undefined => {
+      if (!n || typeof n !== "object") return undefined;
+      if (typeof n.audio === "string" && n.audio) return n.audio;
+      if (typeof n.data === "string" && n.data) {
+        // data 可能就是 base64 音频
+        try {
+          JSON.parse(n.data);
+        } catch {
+          return n.data;
+        }
+      }
+      for (const key of Object.keys(n)) {
+        if (
+          key === "event" ||
+          key === "type" ||
+          key === "seq" ||
+          key === "duration"
+        )
+          continue;
+        const found = walk(n[key]);
+        if (found) return found;
+      }
+      return undefined;
+    };
+    return walk(obj) ?? "";
+  } catch {
+    // 非 JSON 行：可能本身就是 base64 音频
+    return jsonText.replace(/"/g, "").trim();
+  }
+}
+
 /**
  * 豆包语音（火山语音技术平台）：
  * - TTS 合成: POST https://openspeech.bytedance.com/api/v3/tts/unidirectional/sse
@@ -108,20 +143,15 @@ export class VoiceController {
       }
 
       const raw = await res.text();
-      // SSE 解析：data: {"audio":"base64","duration":..} 分片 → 拼接
+      this.logger.log(`TTS raw[${raw.length}]: ${raw.slice(0, 400)}`);
+      // SSE 解析（兼容多层嵌套）：data: {audio} / {data:{audio}} / {data:{data:{audio}}}
       const audioParts: string[] = [];
       for (const line of raw.split("\n")) {
         if (!line.startsWith("data:")) continue;
         const jsonText = line.slice(5).trim();
         if (!jsonText || jsonText === "[DONE]") continue;
-        try {
-          const evt = JSON.parse(jsonText);
-          if (typeof evt?.audio === "string" && evt.audio) {
-            audioParts.push(evt.audio);
-          }
-        } catch {
-          /* 忽略非 JSON 行 */
-        }
+        const audio = extractAudioField(jsonText);
+        if (audio) audioParts.push(audio);
       }
       if (!audioParts.length) {
         throw new BadRequestException(
