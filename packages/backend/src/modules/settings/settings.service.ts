@@ -1,0 +1,88 @@
+import { Injectable } from "@nestjs/common";
+import { readFileSync, writeFileSync } from "node:fs";
+import { spawn } from "node:child_process";
+
+/** 允许通过设置页修改的环境变量（危险项如 DATABASE_URL / JWT_SECRET 不在其中） */
+export const EDITABLE_KEYS = [
+  "LLM_API_KEY",
+  "LLM_BASE_URL",
+  "LLM_MODEL",
+  "EMBEDDING_API_KEY",
+  "EMBEDDING_BASE_URL",
+  "EMBEDDING_MODEL",
+  "CORS_ORIGINS",
+] as const;
+
+/** 需要脱敏展示的密钥字段 */
+const SECRET_KEYS = new Set(["LLM_API_KEY", "EMBEDDING_API_KEY"]);
+
+function mask(value: string): string {
+  if (value.length <= 8) return "****";
+  return `${value.slice(0, 4)}****${value.slice(-2)}`;
+}
+
+@Injectable()
+export class SettingsService {
+  private readonly envFile = ".env";
+
+  private readMap(): Record<string, string> {
+    const raw = readFileSync(this.envFile, "utf-8");
+    const map: Record<string, string> = {};
+    for (const line of raw.split("\n")) {
+      const m = line.match(/^([A-Za-z0-9_]+)=(.*)$/);
+      if (m) map[m[1]] = m[2].trim();
+    }
+    return map;
+  }
+
+  /** 返回可编辑配置，密钥脱敏 */
+  readMasked(): Record<string, string> {
+    const map = this.readMap();
+    const out: Record<string, string> = {};
+    for (const key of EDITABLE_KEYS) {
+      const value = map[key] ?? "";
+      out[key] = SECRET_KEYS.has(key) && value ? mask(value) : value;
+    }
+    return out;
+  }
+
+  /** 更新 .env 中指定的字段（空串/未提交的字段跳过，避免误清空） */
+  update(patch: Record<string, unknown>): string[] {
+    const map = this.readMap();
+    const changed: string[] = [];
+    for (const key of EDITABLE_KEYS) {
+      const value = patch[key];
+      if (typeof value !== "string") continue;
+      const trimmed = value.trim();
+      if (trimmed === "") continue; // 留空 = 不修改（密钥脱敏回填时尤其需要）
+      if (map[key] !== trimmed) {
+        map[key] = trimmed;
+        changed.push(key);
+      }
+    }
+    if (changed.length === 0) return changed;
+
+    let out = readFileSync(this.envFile, "utf-8");
+    for (const key of changed) {
+      const line = `${key}=${map[key]}`;
+      const re = new RegExp(`^${key}=.*$`, "m");
+      out = re.test(out) ? out.replace(re, line) : `${out}\n${line}\n`;
+    }
+    writeFileSync(this.envFile, out);
+    return changed;
+  }
+
+  /** 延迟触发 pm2 重启（pm2 守护进程独立于本进程，重启后新 env 生效） */
+  scheduleRestart(pm2Name: string): void {
+    setTimeout(() => {
+      try {
+        spawn("pm2", ["restart", pm2Name], {
+          detached: true,
+          stdio: "ignore",
+        }).unref();
+      } catch {
+        // 重启失败不阻塞响应，前端提示手动重启
+      }
+    }, 800);
+  }
+}

@@ -7,11 +7,13 @@ import { GenerationModule } from "./modules/generation/generation.module";
 import { QaModule } from "./modules/qa/qa.module";
 import { BookmarksModule } from "./modules/bookmarks/bookmarks.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { SettingsModule } from "./modules/settings/settings.module";
 import { JwtAuthGuard } from "./modules/auth/guards/jwt-auth.guard";
 
 @Module({
   imports: [
     AuthModule,
+    SettingsModule,
     DocumentsModule,
     RagModule,
     GenerationModule,
