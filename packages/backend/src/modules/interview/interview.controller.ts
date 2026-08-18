@@ -20,7 +20,10 @@ export class InterviewController {
     @CurrentUser() user: { id: string },
   ) {
     try {
-      const total = Math.max(1, Math.min(Number(body.totalQuestions) || 3, 6));
+      const total = Math.max(
+        1,
+        Math.min(Number(body.totalQuestions) || 10, 20),
+      );
       const result = await this.interview.createSession(user.id, total);
       return { ok: true, ...result };
     } catch (error) {

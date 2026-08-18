@@ -9,6 +9,7 @@ import { BookmarksModule } from "./modules/bookmarks/bookmarks.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { SettingsModule } from "./modules/settings/settings.module";
 import { InterviewModule } from "./modules/interview/interview.module";
+import { VoiceModule } from "./modules/voice/voice.module";
 import { JwtAuthGuard } from "./modules/auth/guards/jwt-auth.guard";
 
 @Module({
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from "./modules/auth/guards/jwt-auth.guard";
     AuthModule,
     SettingsModule,
     InterviewModule,
+    VoiceModule,
     DocumentsModule,
     RagModule,
     GenerationModule,

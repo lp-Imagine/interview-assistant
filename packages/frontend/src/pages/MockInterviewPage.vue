@@ -1,112 +1,194 @@
 <template>
   <div class="content">
     <div class="mock-page">
-      <!-- 顶部：面试官形象 + 状态 -->
+      <!-- ===== 顶部：面试官形象 ===== -->
       <div class="stage">
-        <div class="avatar-wrap">
-          <div class="avatar-ring" :class="state"></div>
+        <div class="avatar-scene">
+          <div class="halo" :class="state"></div>
           <div class="avatar" :class="state">
             <svg
-              viewBox="0 0 120 120"
-              width="110"
-              height="110"
+              viewBox="0 0 160 180"
+              width="148"
+              height="166"
               aria-hidden="true"
             >
-              <!-- 身体/领带 -->
+              <defs>
+                <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ffd9b8" />
+                  <stop offset="100%" stop-color="#f0b88f" />
+                </linearGradient>
+                <linearGradient id="suit" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#4c5fd5" />
+                  <stop offset="100%" stop-color="#3648b8" />
+                </linearGradient>
+                <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#5b4632" />
+                  <stop offset="100%" stop-color="#3a2c1e" />
+                </linearGradient>
+              </defs>
+              <!-- 身体 -->
+              <path
+                d="M40 178 Q40 140 56 128 Q60 118 80 114 Q100 118 104 128 Q120 140 120 178 Z"
+                fill="url(#suit)"
+              />
+              <path
+                d="M60 178 Q64 138 80 130 Q96 138 100 178 Z"
+                fill="#fdf6ec"
+              />
+              <path d="M74 130 L80 138 L86 130 Z" fill="#f97316" />
+              <!-- 衣领 -->
+              <path
+                d="M70 126 L80 118 L90 126 L84 134 L76 134 Z"
+                fill="#eef2ff"
+                stroke="#c7d2fe"
+                stroke-width="1"
+              />
+              <!-- 脖子 -->
               <rect
-                x="34"
-                y="88"
-                width="52"
-                height="22"
-                rx="10"
-                fill="#3b5bdb"
+                x="73"
+                y="96"
+                width="14"
+                height="12"
+                rx="4"
+                fill="url(#skin)"
               />
-              <path d="M54 88 L60 96 L66 88 Z" fill="#f59f00" />
               <!-- 头 -->
-              <circle
-                cx="60"
-                cy="52"
-                r="30"
-                fill="#f3c99a"
-                stroke="#d9a87a"
-                stroke-width="2"
-              />
+              <ellipse cx="80" cy="78" rx="34" ry="38" fill="url(#skin)" />
+              <!-- 耳朵 -->
+              <ellipse cx="46" cy="80" rx="6" ry="9" fill="url(#skin)" />
+              <ellipse cx="114" cy="80" rx="6" ry="9" fill="url(#skin)" />
               <!-- 头发 -->
               <path
-                d="M30 48 Q30 20 60 20 Q90 20 90 48 Q90 34 74 30 Q60 26 46 30 Q30 34 30 48 Z"
-                fill="#4a3728"
+                d="M46 76 Q44 38 80 34 Q116 38 114 76 Q110 52 96 46 Q80 40 64 46 Q50 52 46 76 Z"
+                fill="url(#hair)"
+              />
+              <path
+                d="M46 70 Q46 56 58 50"
+                stroke="#2c2014"
+                stroke-width="2.5"
+                fill="none"
+                stroke-linecap="round"
+              />
+              <!-- 眉毛 -->
+              <path
+                d="M60 62 Q68 58 76 61"
+                stroke="#4a3728"
+                stroke-width="2.2"
+                fill="none"
+                stroke-linecap="round"
+              />
+              <path
+                d="M84 61 Q92 58 100 62"
+                stroke="#4a3728"
+                stroke-width="2.2"
+                fill="none"
+                stroke-linecap="round"
               />
               <!-- 眼睛 -->
               <template v-if="state === 'thinking'">
-                <circle cx="49" cy="52" r="2.6" fill="#2b2b2b" />
-                <circle cx="71" cy="52" r="2.6" fill="#2b2b2b" />
-                <circle cx="49" cy="51" r="1" fill="#fff" />
-                <circle cx="71" cy="51" r="1" fill="#fff" />
+                <circle cx="68" cy="72" r="4.4" fill="#2b2b2b" />
+                <circle cx="92" cy="72" r="4.4" fill="#2b2b2b" />
+                <circle cx="69.5" cy="70.5" r="1.5" fill="#fff" />
+                <circle cx="93.5" cy="70.5" r="1.5" fill="#fff" />
               </template>
               <template v-else>
-                <circle cx="49" cy="52" r="3.4" fill="#2b2b2b" />
-                <circle cx="71" cy="52" r="3.4" fill="#2b2b2b" />
-                <circle cx="50" cy="50.5" r="1.3" fill="#fff" />
-                <circle cx="72" cy="50.5" r="1.3" fill="#fff" />
+                <ellipse cx="68" cy="72" rx="4.6" ry="5.4" fill="#2b2b2b" />
+                <ellipse cx="92" cy="72" rx="4.6" ry="5.4" fill="#2b2b2b" />
+                <circle cx="69.5" cy="70" r="1.7" fill="#fff" />
+                <circle cx="93.5" cy="70" r="1.7" fill="#fff" />
               </template>
               <!-- 眼镜 -->
               <circle
-                cx="49"
-                cy="52"
-                r="8"
+                cx="68"
+                cy="72"
+                r="10"
                 fill="none"
-                stroke="#7b8794"
+                stroke="#64748b"
                 stroke-width="1.6"
               />
               <circle
-                cx="71"
-                cy="52"
-                r="8"
+                cx="92"
+                cy="72"
+                r="10"
                 fill="none"
-                stroke="#7b8794"
+                stroke="#64748b"
                 stroke-width="1.6"
               />
               <line
-                x1="57"
-                y1="52"
-                x2="63"
-                y2="52"
-                stroke="#7b8794"
+                x1="78"
+                y1="72"
+                x2="82"
+                y2="72"
+                stroke="#64748b"
                 stroke-width="1.6"
+              />
+              <line
+                x1="58"
+                y1="70"
+                x2="52"
+                y2="67"
+                stroke="#64748b"
+                stroke-width="1.6"
+              />
+              <!-- 腮红 -->
+              <ellipse
+                cx="56"
+                cy="82"
+                rx="5"
+                ry="3"
+                fill="#f9a8d4"
+                opacity="0.45"
+              />
+              <ellipse
+                cx="104"
+                cy="82"
+                rx="5"
+                ry="3"
+                fill="#f9a8d4"
+                opacity="0.45"
               />
               <!-- 嘴 -->
               <template v-if="state === 'asking'">
-                <ellipse cx="60" cy="70" rx="7" ry="6" fill="#c0392b" />
-                <rect x="53" y="64" width="14" height="4" rx="2" fill="#fff" />
-              </template>
-              <template v-else-if="state === 'listening'">
+                <ellipse cx="80" cy="96" rx="8" ry="7" fill="#c0392b" />
                 <path
-                  d="M52 68 Q60 73 68 68"
-                  stroke="#b03a2e"
+                  d="M72 93 Q80 90 88 93"
+                  stroke="#fff"
                   stroke-width="2.4"
                   fill="none"
                   stroke-linecap="round"
                 />
               </template>
-              <template v-else-if="state === 'done'">
+              <template v-else-if="state === 'listening'">
                 <path
-                  d="M50 67 Q60 75 70 67"
+                  d="M70 94 Q80 100 90 94"
                   stroke="#b03a2e"
                   stroke-width="2.6"
                   fill="none"
                   stroke-linecap="round"
                 />
               </template>
-              <template v-else>
+              <template v-else-if="state === 'done'">
                 <path
-                  d="M52 69 Q60 64 68 69"
+                  d="M68 93 Q80 102 92 93"
                   stroke="#b03a2e"
-                  stroke-width="2.4"
+                  stroke-width="2.8"
                   fill="none"
                   stroke-linecap="round"
                 />
               </template>
+              <template v-else>
+                <path
+                  d="M70 96 Q80 90 90 96"
+                  stroke="#b03a2e"
+                  stroke-width="2.6"
+                  fill="none"
+                  stroke-linecap="round"
+                />
+              </template>
+              <!-- 领带结 -->
+              <path d="M78 138 L80 145 L82 138 L80 132 Z" fill="#f97316" />
             </svg>
+            <!-- 说话声波 -->
             <div v-if="state === 'asking'" class="sound-wave">
               <i
                 v-for="n in 5"
@@ -115,15 +197,17 @@
               ></i>
             </div>
           </div>
-          <div class="status-text">{{ statusText }}</div>
+          <div class="status-pill" :class="state">
+            <span class="dot"></span>{{ statusText }}
+          </div>
         </div>
 
         <!-- 进度 -->
         <div class="progress-area">
           <div class="progress-label">
-            <span v-if="state === 'idle'">准备开始模拟面试</span>
-            <span v-else
-              >第 {{ currentIndex + 1 }} / {{ totalQuestions }} 题</span
+            <template v-if="state === 'idle'">准备开始模拟面试</template>
+            <template v-else
+              >第 {{ currentIndex + 1 }} / {{ totalQuestions }} 题</template
             >
           </div>
           <div class="progress-track">
@@ -135,54 +219,23 @@
         </div>
       </div>
 
-      <!-- 当前对话气泡 -->
-      <div class="dialogue">
-        <div v-if="state === 'asking'" class="bubble ai" key="ask">
-          <span class="who">面试官</span>{{ currentQuestion }}
-        </div>
-        <div v-else-if="state === 'listening'" class="bubble hint">
-          🎤 请开始回答（说完自动识别，或点击停止）
-        </div>
-        <div v-else-if="state === 'thinking'" class="bubble ai thinking">
-          <span class="who">面试官</span>正在认真听你的回答…
-        </div>
-        <div v-else-if="state === 'done'" class="bubble ai" key="done">
-          <span class="who">面试官</span
-          >本次模拟面试结束！感谢参与，祝你面试顺利 🎉
-        </div>
-      </div>
-
-      <!-- 历史轮次 -->
-      <div v-if="turns.length" class="history">
-        <div
-          v-for="t in turns"
-          :key="t.id"
-          class="turn"
-          :class="{ current: t.index === currentIndex }"
-        >
-          <div class="turn-q">
-            <span class="qno">Q{{ t.index + 1 }}</span
-            >{{ t.question }}
+      <!-- ===== 对话区 ===== -->
+      <div class="dialogue-area">
+        <div v-if="state === 'idle'" class="dialogue idle">
+          <div class="dialogue-title">🎤 语音模拟面试</div>
+          <div class="dialogue-desc">
+            面试官基于你的简历资料现场出题，语音提问、语音回答，每题给出专业点评。建议在安静环境、使用
+            Chrome 浏览器。
           </div>
-          <div v-if="t.answer" class="turn-a">
-            <span class="tag">回答</span>{{ t.answer }}
-          </div>
-          <div v-if="t.feedback" class="turn-f">
-            <span class="tag">点评</span>{{ t.feedback }}
-          </div>
-        </div>
-      </div>
-
-      <!-- 控制区 -->
-      <div class="controls">
-        <template v-if="state === 'idle'">
           <div class="start-row">
             <label class="qty">
               面试题数
               <select v-model="totalQuestions">
-                <option :value="3">3 题</option>
-                <option :value="4">4 题</option>
-                <option :value="5">5 题</option>
+                <option :value="5">5 题（约 15 分钟）</option>
+                <option :value="8">8 题（约 25 分钟）</option>
+                <option :value="10">10 题（约 30 分钟）</option>
+                <option :value="15">15 题（约 45 分钟）</option>
+                <option :value="20">20 题（约 60 分钟）</option>
               </select>
             </label>
             <button
@@ -190,67 +243,133 @@
               @click="startInterview"
               :disabled="starting"
             >
-              {{ starting ? "准备中…" : "开始模拟面试" }}
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              {{ starting ? "准备中…" : "开始面试" }}
             </button>
           </div>
-          <p class="tip">
-            面试官将基于你的简历资料出题，逐题语音提问；请用语音或文字作答，每题后给出点评。
-          </p>
-        </template>
+          <p v-if="micError" class="mic-error">{{ micError }}</p>
+        </div>
 
-        <template v-else-if="state === 'listening'">
-          <button
-            class="mic-btn"
-            :class="{ listening: micActive }"
-            @click="toggleMic"
-            title="点击说话/停止"
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3z" />
-              <path
-                d="M19 11a1 1 0 0 1 2 0 9 9 0 0 1-8 8.94V22h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.06A9 9 0 0 1 3 11a1 1 0 1 1 2 0 7 7 0 0 0 14 0z"
-              />
-            </svg>
-            <span>{{ micActive ? "停止录音" : "点击说话" }}</span>
-          </button>
+        <template v-else>
+          <!-- 当前题 -->
+          <div class="question-card">
+            <div class="q-head">
+              <span class="q-badge">{{ currentIndex + 1 }}</span>
+              <span class="q-label">面试官提问</span>
+            </div>
+            <div class="q-text">{{ currentQuestion }}</div>
+          </div>
+
+          <!-- 状态条 -->
+          <div class="state-bar" :class="state">
+            <template v-if="state === 'asking'">
+              <span class="spinner"></span>面试官正在提问…
+            </template>
+            <template v-else-if="state === 'listening'">
+              <svg
+                class="bar-icon"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3z"
+                />
+                <path
+                  d="M19 11a1 1 0 0 1 2 0 9 9 0 0 1-8 8.94V22h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.06A9 9 0 0 1 3 11a1 1 0 1 1 2 0 7 7 0 0 0 14 0z"
+                />
+              </svg>
+              请开始回答（说完自动识别，或点击停止）
+            </template>
+            <template v-else-if="state === 'thinking'">
+              <span class="spinner"></span>面试官正在思考你的回答…
+            </template>
+            <template v-else-if="state === 'done'">
+              本次模拟面试结束 🎉
+            </template>
+          </div>
+        </template>
+      </div>
+
+      <!-- ===== 历史轮次 ===== -->
+      <div v-if="turns.length" class="history">
+        <div
+          v-for="t in turns"
+          :key="t.id"
+          class="turn"
+          :class="{ current: t.index === currentIndex && state !== 'done' }"
+        >
+          <div class="turn-q">
+            <span class="qno">{{ t.index + 1 }}</span>
+            {{ t.question }}
+          </div>
+          <div v-if="t.answer" class="turn-row">
+            <span class="tag you">你</span>{{ t.answer }}
+          </div>
+          <div v-if="t.feedback" class="turn-row feedback">
+            <span class="tag ai">面试官</span>{{ t.feedback }}
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 控制区 ===== -->
+      <div v-if="state === 'listening'" class="controls listening">
+        <button
+          class="mic-btn"
+          :class="{ active: micActive }"
+          @click="toggleMic"
+        >
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3z" />
+            <path
+              d="M19 11a1 1 0 0 1 2 0 9 9 0 0 1-8 8.94V22h3a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h3v-2.06A9 9 0 0 1 3 11a1 1 0 1 1 2 0 7 7 0 0 0 14 0z"
+            />
+          </svg>
+          <span>{{ micActive ? "停止录音" : "点击说话" }}</span>
+        </button>
+        <div class="controls-side">
           <button
             class="ghost-btn"
             @click="submitAnswer('（本题跳过）')"
             :disabled="submitting"
           >
-            跳过本题
+            跳过
           </button>
           <div class="text-row">
             <input
               v-model="textAnswer"
-              placeholder="或在这里输入回答，回车提交"
+              placeholder="或输入文字回答，回车提交"
               @keyup.enter="submitAnswer(textAnswer)"
               :disabled="submitting"
             />
             <button
-              class="ghost-btn"
+              class="ghost-btn send"
               @click="submitAnswer(textAnswer)"
               :disabled="!textAnswer.trim() || submitting"
             >
               提交
             </button>
           </div>
-          <p v-if="micError" class="mic-error">{{ micError }}</p>
-        </template>
+        </div>
+        <p v-if="micError" class="mic-error">{{ micError }}</p>
+      </div>
 
-        <template v-else-if="state === 'asking'">
-          <button class="ghost-btn" @click="skipSpeaking">
-            跳过语音（直接回答）
-          </button>
-        </template>
+      <div v-else-if="state === 'asking'" class="controls">
+        <button class="ghost-btn" @click="skipSpeaking">
+          跳过语音（直接回答）
+        </button>
+      </div>
 
-        <template v-else-if="state === 'thinking'">
-          <div class="thinking-hint">⏳ AI 面试官正在思考…</div>
-        </template>
-
-        <template v-else-if="state === 'done'">
-          <button class="primary-btn" @click="resetInterview">再来一场</button>
-        </template>
+      <div v-else-if="state === 'done'" class="controls">
+        <button class="primary-btn" @click="resetInterview">再来一场</button>
       </div>
     </div>
   </div>
@@ -288,7 +407,7 @@ interface LocalTurn {
 const state = ref<InterviewState>("idle");
 const starting = ref(false);
 const submitting = ref(false);
-const totalQuestions = ref(3);
+const totalQuestions = ref(10);
 const sessionId = ref("");
 const currentIndex = ref(0);
 const currentQuestion = ref("");
@@ -328,9 +447,7 @@ const progressPercent = computed(() => {
   );
 });
 
-onMounted(() => {
-  preloadVoices();
-});
+onMounted(() => preloadVoices());
 
 onBeforeUnmount(() => {
   stopSpeaking();
@@ -349,7 +466,6 @@ async function startInterview() {
     currentIndex.value = 0;
     turns.value = [{ index: 0, question, id: "pending" }];
     currentQuestion.value = question;
-    state.value = "asking";
     speakQuestion(question);
   } catch (error: any) {
     micError.value =
@@ -411,7 +527,6 @@ async function submitAnswer(answer: string) {
 
   try {
     const result = await submitInterviewAnswer(sessionId.value, clean);
-    // 更新当前轮次（answer/feedback）
     const idx = turns.value.findIndex((t) => t.index === result.turn.index);
     if (idx >= 0) {
       turns.value[idx] = {
@@ -432,9 +547,7 @@ async function submitAnswer(answer: string) {
         id: `q-${result.currentIndex}`,
       });
       currentQuestion.value = result.nextQuestion;
-      // 先播报点评，再播下一题
-      const feedback = result.feedback;
-      speak(feedback, {
+      speak(result.feedback, {
         onEnd: () => speakQuestion(result.nextQuestion),
       });
       state.value = "asking";
@@ -468,91 +581,118 @@ function resetInterview() {
   flex: 1;
   overflow-y: auto;
   padding: var(--content-padding);
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 0.045),
+    transparent 320px
+  );
 }
 
 .mock-page {
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  min-height: 100%;
+  gap: 16px;
+  padding-bottom: 24px;
 }
 
-/* ===== 舞台 ===== */
+/* ===== 形象区 ===== */
 .stage {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-2xl);
-  padding: 26px 24px 20px;
+  border-radius: 22px;
+  padding: 30px 24px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.07);
+  position: relative;
+  overflow: hidden;
 }
 
-.avatar-wrap {
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    600px 200px at 50% -40px,
+    rgba(99, 102, 241, 0.09),
+    transparent
+  );
+  pointer-events: none;
+}
+
+.avatar-scene {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 }
 
-.avatar-ring {
+.halo {
   position: absolute;
-  inset: -6px;
+  top: 8px;
+  width: 168px;
+  height: 168px;
   border-radius: 50%;
-  border: 2px solid transparent;
+  background: conic-gradient(
+    from 0deg,
+    rgba(99, 102, 241, 0.16),
+    rgba(139, 92, 246, 0.16),
+    rgba(99, 102, 241, 0.16)
+  );
+  filter: blur(2px);
+  animation: halo-rotate 12s linear infinite;
 }
 
-.avatar-ring.asking {
-  border-color: #6366f1;
-  animation: ring-pulse 1.4s ease-out infinite;
+.halo.asking {
+  animation:
+    halo-rotate 12s linear infinite,
+    halo-bright 1.4s ease-in-out infinite;
 }
 
-.avatar-ring.listening {
-  border-color: #22c55e;
-  animation: ring-pulse 1.6s ease-out infinite;
+.halo.listening {
+  background: conic-gradient(
+    from 0deg,
+    rgba(34, 197, 94, 0.16),
+    rgba(16, 185, 129, 0.16),
+    rgba(34, 197, 94, 0.16)
+  );
 }
 
-.avatar-ring.thinking {
-  border-color: #f59f00;
-}
-
-@keyframes ring-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 0.9;
+@keyframes halo-rotate {
+  to {
+    transform: rotate(360deg);
   }
-  70% {
-    transform: scale(1.14);
-    opacity: 0;
-  }
+}
+
+@keyframes halo-bright {
+  0%,
   100% {
-    opacity: 0;
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
   }
 }
 
 .avatar {
   position: relative;
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.18);
+  width: 148px;
+  height: 166px;
+  filter: drop-shadow(0 10px 24px rgba(79, 70, 229, 0.22));
+  transition: transform 0.3s ease;
 }
 
 .avatar.asking {
-  animation: bob 1s ease-in-out infinite;
+  animation: bob 1.1s ease-in-out infinite;
 }
 
-.avatar.listening .avatar-ring {
-  border-color: #22c55e;
+.avatar.listening {
+  animation: lean 2.4s ease-in-out infinite;
 }
 
 @keyframes bob {
@@ -561,76 +701,131 @@ function resetInterview() {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-4px);
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes lean {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2deg) translateY(-2px);
+  }
+  75% {
+    transform: rotate(2deg) translateY(-1px);
   }
 }
 
 .sound-wave {
   position: absolute;
-  right: -14px;
-  bottom: 6px;
+  right: 2px;
+  bottom: 16px;
   display: flex;
   align-items: flex-end;
-  gap: 2px;
-  height: 16px;
+  gap: 3px;
+  height: 18px;
 }
 
 .sound-wave i {
-  width: 3px;
-  background: #6366f1;
+  width: 3.5px;
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
   border-radius: 2px;
   animation: wave 0.8s ease-in-out infinite;
 }
 
 .sound-wave i:nth-child(1) {
-  height: 6px;
+  height: 7px;
 }
 .sound-wave i:nth-child(2) {
-  height: 12px;
+  height: 13px;
 }
 .sound-wave i:nth-child(3) {
-  height: 16px;
+  height: 18px;
 }
 .sound-wave i:nth-child(4) {
-  height: 10px;
+  height: 11px;
 }
 .sound-wave i:nth-child(5) {
-  height: 6px;
+  height: 7px;
 }
 
 @keyframes wave {
   0%,
   100% {
-    transform: scaleY(0.5);
+    transform: scaleY(0.45);
   }
   50% {
     transform: scaleY(1);
   }
 }
 
-.status-text {
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   font-size: 13px;
-  color: var(--color-text-muted);
+  font-weight: 600;
+  color: var(--color-text);
   background: var(--color-surface-muted);
-  padding: 5px 14px;
+  border: 1px solid var(--color-border);
+  padding: 6px 16px;
   border-radius: 999px;
+}
+
+.status-pill .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.status-pill.asking .dot {
+  background: #6366f1;
+  animation: dot-blink 1s ease-in-out infinite;
+}
+
+.status-pill.listening .dot {
+  background: #22c55e;
+  animation: dot-blink 1.2s ease-in-out infinite;
+}
+
+.status-pill.thinking .dot {
+  background: #f59f0b;
+}
+
+.status-pill.done .dot {
+  background: #8b5cf6;
+}
+
+@keyframes dot-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 
 /* ===== 进度 ===== */
 .progress-area {
   width: 100%;
+  max-width: 420px;
   display: grid;
   gap: 8px;
 }
 
 .progress-label {
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--color-text-muted);
   text-align: center;
+  font-weight: 500;
 }
 
 .progress-track {
-  height: 6px;
+  height: 7px;
   background: var(--color-surface-muted);
   border-radius: 999px;
   overflow: hidden;
@@ -638,55 +833,170 @@ function resetInterview() {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  background: linear-gradient(90deg, #6366f1, #a855f7);
   border-radius: 999px;
-  transition: width 0.4s ease;
+  transition: width 0.45s ease;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
 }
 
-/* ===== 对话气泡 ===== */
-.dialogue {
-  min-height: 64px;
+/* ===== 对话区 ===== */
+.dialogue-area {
+  display: grid;
+  gap: 12px;
 }
 
-.bubble {
-  padding: 14px 18px;
-  border-radius: 14px;
-  line-height: 1.7;
-  font-size: 15px;
+.dialogue.idle {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: 18px;
+  padding: 30px 26px;
+  text-align: center;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.dialogue-title {
+  font-size: 19px;
+  font-weight: 700;
   color: var(--color-text);
+}
+
+.dialogue-desc {
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  line-height: 1.7;
+  max-width: 460px;
+}
+
+.start-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.qty {
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qty select {
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  font-size: 14px;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+/* 题目卡 */
+.question-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-top-left-radius: 4px;
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: var(--shadow-sm);
 }
 
-.bubble .who {
-  display: block;
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-bottom: 4px;
+.q-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.q-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.35);
+}
+
+.q-label {
+  font-size: 12.5px;
   font-weight: 600;
-}
-
-.bubble.hint {
-  background: linear-gradient(
-    135deg,
-    rgba(34, 197, 94, 0.08),
-    rgba(34, 197, 94, 0.04)
-  );
-  border-color: rgba(34, 197, 94, 0.3);
-  text-align: center;
-  color: #15803d;
-}
-
-.bubble.thinking {
   color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.q-text {
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--color-text);
+}
+
+/* 状态条 */
+.state-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 13px 18px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.state-bar.asking {
+  color: #4f46e5;
+  background: rgba(99, 102, 241, 0.07);
+  border-color: rgba(99, 102, 241, 0.18);
+}
+
+.state-bar.listening {
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+.state-bar.thinking {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.state-bar.done {
+  color: #7c3aed;
+  background: rgba(139, 92, 246, 0.07);
+  border-color: rgba(139, 92, 246, 0.18);
+}
+
+.bar-icon {
+  flex: none;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ===== 历史轮次 ===== */
 .history {
   display: grid;
-  gap: 12px;
-  flex: 1;
+  gap: 10px;
 }
 
 .turn {
@@ -696,48 +1006,72 @@ function resetInterview() {
   padding: 14px 16px;
   display: grid;
   gap: 8px;
+  opacity: 0.82;
+  transition:
+    opacity 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.turn:hover {
+  opacity: 1;
 }
 
 .turn.current {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+  opacity: 1;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
 }
 
 .turn-q {
   font-weight: 600;
-  font-size: 14.5px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.65;
 }
 
 .qno {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
   color: #fff;
-  font-size: 11px;
-  border-radius: 6px;
-  padding: 2px 7px;
+  font-size: 11.5px;
+  font-weight: 700;
   margin-right: 8px;
   vertical-align: 1px;
 }
 
-.turn-a,
-.turn-f {
+.turn-row {
   font-size: 13.5px;
   line-height: 1.7;
   color: var(--color-text);
+  padding-left: 30px;
 }
 
-.turn-f {
+.turn-row.feedback {
   color: var(--color-text-muted);
 }
 
 .tag {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
-  border-radius: 5px;
-  padding: 1px 6px;
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2px 8px;
   margin-right: 8px;
+  vertical-align: 1.5px;
+}
+
+.tag.you {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.tag.ai {
+  color: #7c3aed;
+  background: rgba(139, 92, 246, 0.1);
 }
 
 /* ===== 控制区 ===== */
@@ -746,74 +1080,43 @@ function resetInterview() {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 20px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-2xl);
+  border-radius: 20px;
   box-shadow: var(--shadow-sm);
 }
 
-.start-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.qty {
-  font-size: 14px;
-  color: var(--color-text-muted);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.qty select {
-  padding: 7px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: var(--color-surface);
-  font-size: 14px;
-}
-
-.primary-btn {
-  padding: 11px 26px;
-  border: 0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #6366f1, #7c6cf6);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
-  transition: transform 0.15s ease;
-}
-
-.primary-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-}
-
-.primary-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
+.controls.listening {
+  gap: 14px;
 }
 
 .mic-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 26px;
+  gap: 10px;
+  padding: 14px 30px;
   border: 0;
   border-radius: 999px;
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.35);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-.mic-btn.listening {
+.mic-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(34, 197, 94, 0.42);
+}
+
+.mic-btn.active {
   background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.35);
   animation: mic-pulse 1.2s ease-in-out infinite;
 }
 
@@ -823,14 +1126,73 @@ function resetInterview() {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.05);
+    transform: scale(1.04);
   }
+}
+
+.controls-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.text-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.text-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color 0.15s ease;
+}
+
+.text-row input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #6366f1, #7c6cf6);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 5px 16px rgba(99, 102, 241, 0.32);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.primary-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 20px rgba(99, 102, 241, 0.4);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .ghost-btn {
   padding: 9px 18px;
   border: 1px solid var(--color-border);
-  border-radius: 10px;
+  border-radius: 11px;
   background: var(--color-surface);
   color: var(--color-text);
   font-size: 13.5px;
@@ -848,27 +1210,10 @@ function resetInterview() {
   cursor: default;
 }
 
-.text-row {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-  max-width: 480px;
-}
-
-.text-row input {
-  flex: 1;
-  padding: 9px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  font-size: 14px;
-  background: var(--color-surface);
-}
-
-.tip {
-  font-size: 12.5px;
-  color: var(--color-text-muted);
-  text-align: center;
-  margin: 0;
+.ghost-btn.send {
+  color: #fff;
+  background: linear-gradient(135deg, #6366f1, #7c6cf6);
+  border-color: transparent;
 }
 
 .mic-error {
@@ -877,22 +1222,25 @@ function resetInterview() {
   margin: 0;
 }
 
-.thinking-hint {
-  color: var(--color-text-muted);
-  font-size: 14px;
-}
-
 @media (max-width: 768px) {
   .content {
     padding: 0;
   }
   .stage {
-    border-radius: 0 0 16px 16px;
-    padding: 18px 14px 14px;
+    border-radius: 0 0 20px 20px;
+    padding: 22px 14px 16px;
+  }
+  .dialogue.idle {
+    border-radius: 16px;
+    margin: 0 10px;
   }
   .controls {
     border-radius: 16px;
-    margin: 0 10px 12px;
+    margin: 0 10px;
+  }
+  .start-row {
+    flex-direction: column;
+    gap: 12px;
   }
 }
 </style>

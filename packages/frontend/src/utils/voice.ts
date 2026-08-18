@@ -1,46 +1,102 @@
 /**
- * 语音能力封装：浏览器原生 TTS/ASR（零依赖），预留火山方舟语音接口。
+ * 语音能力封装：优先火山方舟 TTS（更自然，走后端 /api/voice/tts 代理，不暴露 key），
+ * 失败时回退浏览器原生 SpeechSynthesis。ASR 用浏览器原生（Chrome 中文）。
  *
- * 火山接入点（后续可替换）：
- * - TTS: POST https://ark.cn-beijing.volces.com/api/v3/tts  (豆包语音合成)
- * - ASR: POST https://ark.cn-beijing.volces.com/api/v3/asr  (豆包语音识别)
- * 需要 ark key 具备语音模型权限；接入时替换 speak()/startListening() 内部实现即可。
+ * 火山接入点说明：
+ * - TTS: 后端 /api/voice/tts → 火山 ark /api/v3/tts（doubao-tts，共用 LLM_API_KEY）
+ * - 如需更自然音色，可在服务器 .env 配置 TTS_MODEL / TTS_VOICE
  */
 
 export interface SpeechOptions {
-  /** 播报开始 */
   onStart?: () => void;
-  /** 播报结束 */
   onEnd?: () => void;
-  /** 语速 0.1-2（默认 1） */
   rate?: number;
 }
 
-/** 选中一个中文语音（优先普通话女声） */
+let currentAudio: HTMLAudioElement | null = null;
+let currentUtterance: SpeechSynthesisUtterance | null = null;
+
+/** 选一个中文语音（浏览器回退用） */
 function pickChineseVoice(): SpeechSynthesisVoice | undefined {
   const voices = window.speechSynthesis?.getVoices() ?? [];
   const zh = voices.filter((v) => v.lang.toLowerCase().startsWith("zh"));
   if (!zh.length) return undefined;
   return (
-    zh.find((v) => /xiaoxiao|huihui|yating|female/i.test(v.name)) ||
+    zh.find((v) => /xiaoxiao|huihui|tingting|yating|female/i.test(v.name)) ||
     zh.find((v) => v.lang.toLowerCase() === "zh-cn") ||
     zh[0]
   );
 }
 
-/** 预加载语音列表（Chrome 首次 getVoices 为空，需触发加载） */
+/** 预加载语音列表（Chrome 首次 getVoices 为空） */
 export function preloadVoices(): void {
-  if (!("speechSynthesis" in window)) return;
-  // 触发异步加载
-  window.speechSynthesis.getVoices();
+  if ("speechSynthesis" in window) window.speechSynthesis.getVoices();
 }
 
-/** TTS：播报一段文本（浏览器原生；失败返回 false） */
-export function speak(text: string, opts: SpeechOptions = {}): boolean {
-  if (!("speechSynthesis" in window)) return false;
+function base64ToBlob(base64: string, mime: string): Blob {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+/** 优先火山 TTS；返回是否已用火山成功播放 */
+async function speakViaVolcano(
+  text: string,
+  opts: SpeechOptions,
+): Promise<boolean> {
+  try {
+    const res = await fetch("/api/voice/tts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    });
+    if (!res.ok) return false;
+    const json = (await res.json()) as {
+      ok?: boolean;
+      base64?: string;
+      format?: string;
+    };
+    if (json.ok !== true || !json.base64) return false;
+
+    stopSpeaking();
+    const mime = json.format === "mp3" ? "audio/mpeg" : "audio/mp3";
+    const url = URL.createObjectURL(base64ToBlob(json.base64, mime));
+    const audio = new Audio(url);
+    currentAudio = audio;
+
+    return await new Promise<boolean>((resolve) => {
+      const done = (ok: boolean) => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        opts.onEnd?.();
+        resolve(ok);
+      };
+      audio.onended = () => done(true);
+      audio.onerror = () => done(false);
+      audio
+        .play()
+        .then(() => opts.onStart?.())
+        .catch(() => done(false));
+    });
+  } catch {
+    return false;
+  }
+}
+
+/** TTS：播报一段文本（火山优先，浏览器回退） */
+export async function speak(
+  text: string,
+  opts: SpeechOptions = {},
+): Promise<boolean> {
   const clean = text.replace(/\s+/g, " ").trim();
   if (!clean) return false;
 
+  const volcanoOk = await speakViaVolcano(clean, opts);
+  if (volcanoOk) return true;
+
+  // 回退：浏览器原生语音
+  if (!("speechSynthesis" in window)) return false;
   stopSpeaking();
   const utterance = new SpeechSynthesisUtterance(clean);
   utterance.lang = "zh-CN";
@@ -48,36 +104,39 @@ export function speak(text: string, opts: SpeechOptions = {}): boolean {
   utterance.pitch = 1;
   const voice = pickChineseVoice();
   if (voice) utterance.voice = voice;
-
   utterance.onstart = () => opts.onStart?.();
   utterance.onend = () => {
+    currentUtterance = null;
     opts.onEnd?.();
   };
   utterance.onerror = () => {
+    currentUtterance = null;
     opts.onEnd?.();
   };
-
+  currentUtterance = utterance;
   window.speechSynthesis.speak(utterance);
   return true;
 }
 
 /** 停止当前播报 */
 export function stopSpeaking(): void {
-  if ("speechSynthesis" in window) {
-    window.speechSynthesis.cancel();
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
   }
+  if (currentUtterance) {
+    currentUtterance = null;
+  }
+  if ("speechSynthesis" in window) window.speechSynthesis.cancel();
 }
 
 export interface ListeningOptions {
-  /** 识别到最终结果（一次说话结束） */
   onResult: (text: string) => void;
-  /** 识别失败/不支持 */
   onError?: (message: string) => void;
-  /** 开始监听 */
   onStart?: () => void;
 }
 
-/** ASR：开始语音识别（浏览器原生 webkitSpeechRecognition，Chrome 支持中文） */
+/** ASR：浏览器原生语音识别（Chrome 支持中文） */
 export function startListening(opts: ListeningOptions): (() => void) | null {
   const SpeechRecognition =
     (window as any).SpeechRecognition ||
@@ -99,7 +158,6 @@ export function startListening(opts: ListeningOptions): (() => void) | null {
     if (text.trim()) opts.onResult(text.trim());
   };
   recognition.onerror = (event: any) => {
-    // no-speech（用户没说话）静默，其余报错
     if (event?.error && event.error !== "no-speech") {
       opts.onError?.(`语音识别失败：${event.error}`);
     }
