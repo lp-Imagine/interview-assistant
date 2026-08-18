@@ -142,8 +142,14 @@ async function load() {
   loading.value = true;
   try {
     current.value = await fetchSettings();
-    // 表单初始为空（密钥留空=不修改；普通字段留空=不改）
-    form.value = {};
+    // 非密钥字段直接回填输入框（用户能看到/修改当前配置）；
+    // 密钥字段保持留空（脱敏值不能当真实 key 提交，留空=不修改）
+    const next: Record<string, string> = {};
+    for (const [key, value] of Object.entries(current.value)) {
+      if (key === "LLM_API_KEY" || key === "EMBEDDING_API_KEY") continue;
+      next[key] = value ?? "";
+    }
+    form.value = next;
   } catch {
     message.value = "读取配置失败，请确认已登录";
     isError.value = true;

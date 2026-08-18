@@ -54,7 +54,7 @@
       </div>
 
       <!-- 消息区 -->
-      <div class="messages" ref="messagesContainer">
+      <div class="messages" ref="messagesContainer" @scroll="onMessagesScroll">
         <!-- 空状态：AI 图标 + 示例问题 -->
         <div v-if="!messages.length" class="empty-state">
           <div class="empty-icon">
@@ -286,6 +286,8 @@ const hoveredIndex = ref<number | null>(null);
 const copiedIndex = ref<number | null>(null);
 const stoppedByUser = ref(false);
 const streaming = ref(false);
+// 用户是否主动上滚查看历史（上滚时流式回复暂停自动滚底，滚回底部恢复）
+const userScrolledUp = ref(false);
 
 const suggestions = [
   "如何准备系统设计面试？",
@@ -341,8 +343,12 @@ function isNearBottom(): boolean {
   return el.scrollHeight - el.scrollTop - el.clientHeight < 60;
 }
 
+function onMessagesScroll() {
+  userScrolledUp.value = !isNearBottom();
+}
+
 function scrollToBottom(force = false) {
-  if (messagesContainer.value && (force || isNearBottom())) {
+  if (messagesContainer.value && (force || !userScrolledUp.value)) {
     messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
   }
 }
