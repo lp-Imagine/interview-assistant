@@ -117,7 +117,7 @@
             <span>语音识别 Resource ID（ASR_RESOURCE_ID，一般不用改）</span>
             <input
               v-model="form.ASR_RESOURCE_ID"
-              placeholder="volc.bigasr.auc_turbo"
+              placeholder="volc.seedasr.auc"
             />
           </label>
         </fieldset>

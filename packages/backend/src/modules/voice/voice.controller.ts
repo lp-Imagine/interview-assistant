@@ -177,48 +177,88 @@ export class VoiceController {
     if (audio.length > 8_000_000)
       throw new BadRequestException("音频过大（最多约 6MB）");
 
-    const resourceId =
-      this.readEnv("ASR_RESOURCE_ID") || "volc.bigasr.auc_turbo";
+    // 新版录音文件识别：resource volc.seedasr.auc，submit + query 两段式
+    const resourceId = this.readEnv("ASR_RESOURCE_ID") || "volc.seedasr.auc";
+    const requestId = randomUUID();
     const headers = this.voiceHeaders(resourceId);
+    headers["X-Api-Request-Id"] = requestId;
 
     const format =
       body.format === "mp4" ? "mp4" : body.format === "ogg" ? "ogg" : "wav";
     const payload = {
       user: { uid: "dsh-interview" },
-      audio: { format, data: audio },
+      audio: {
+        format,
+        data: audio,
+        codec: "raw",
+        rate: 16000,
+        bits: 16,
+        channel: 1,
+      },
       request: {
         model_name: "bigmodel",
         enable_itn: true,
+        enable_punc: true,
         show_utterances: false,
       },
     };
 
     try {
-      const res = await fetch(
-        "https://openspeech.bytedance.com/api/v3/auc/bigmodel/recognize/flash",
+      // 1. 提交任务
+      const submitRes = await fetch(
+        "https://openspeech.bytedance.com/api/v3/auc/bigmodel/submit",
         {
           method: "POST",
           headers,
           body: JSON.stringify(payload),
         },
       );
-      if (!res.ok) {
-        const err = (await res.text()).slice(0, 300);
-        this.logger.warn(`ASR failed ${res.status}: ${err}`);
+      const submitJson = await submitRes.json().catch(() => ({}));
+      if (
+        !submitRes.ok ||
+        (submitJson.code !== undefined && submitJson.code !== 0)
+      ) {
+        const errText = JSON.stringify(submitJson).slice(0, 300);
+        this.logger.warn(`ASR submit failed ${submitRes.status}: ${errText}`);
         throw new BadRequestException(
-          `语音识别失败（${res.status}）：请确认已开通语音识别并在设置页填 VOICE_API_KEY`,
+          `语音识别提交失败（${submitRes.status}）：请确认已开通语音识别并在设置页填 VOICE_API_KEY / ASR_RESOURCE_ID`,
         );
       }
 
-      const json = await res.json();
-      const utterance = json?.result?.[0];
-      const text =
-        (typeof utterance === "string" ? utterance : utterance?.text) ||
-        json?.text ||
-        "";
-      const cleaned = String(text).trim();
-      if (!cleaned) throw new BadRequestException("语音识别未返回内容");
-      return { ok: true, text: cleaned };
+      // 2. 轮询查询结果（最多 30 秒）
+      let text = "";
+      for (let i = 0; i < 15; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const queryRes = await fetch(
+          "https://openspeech.bytedance.com/api/v3/auc/bigmodel/query",
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({}),
+          },
+        );
+        const queryJson = await queryRes.json().catch(() => ({}));
+        const code = queryJson.code;
+        // 0=成功，1=进行中/排队；4 等=失败
+        if (code === 0) {
+          const utterance = queryJson.result?.[0];
+          text = String(
+            (typeof utterance === "string" ? utterance : utterance?.text) ||
+              queryJson.text ||
+              "",
+          ).trim();
+          if (text) break;
+        } else if (code !== undefined && code !== 0 && code !== 1) {
+          this.logger.warn(`ASR query failed code=${code}`);
+          break;
+        }
+      }
+
+      if (!text)
+        throw new BadRequestException(
+          "语音识别未返回内容（请检查音频或开通状态）",
+        );
+      return { ok: true, text };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       const message = error instanceof Error ? error.message : "语音识别失败";
