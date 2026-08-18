@@ -131,12 +131,12 @@
                 <path d="M9 17h6" />
               </svg>
             </div>
-            <div class="msg-body">
-              <div
-                class="bubble-container"
-                @mouseenter="hoveredIndex = i"
-                @mouseleave="hoveredIndex = null"
-              >
+            <div
+              class="msg-body"
+              @mouseenter="hoveredIndex = i"
+              @mouseleave="hoveredIndex = null"
+            >
+              <div class="bubble-container">
                 <div
                   v-if="!msg.content && streaming"
                   class="bubble streaming empty"
@@ -286,8 +286,10 @@ const hoveredIndex = ref<number | null>(null);
 const copiedIndex = ref<number | null>(null);
 const stoppedByUser = ref(false);
 const streaming = ref(false);
-// 用户是否主动上滚查看历史（上滚时流式回复暂停自动滚底，滚回底部恢复）
+// 用户是否主动向上滚动查看历史（仅手势上滚才暂停跟随；
+// 程序化滚动/停在非底部不会误标，保证"一开始不在底部也会跟随"）
 const userScrolledUp = ref(false);
+let lastScrollTop = 0;
 
 const suggestions = [
   "如何准备系统设计面试？",
@@ -316,7 +318,9 @@ onMounted(async () => {
 watch(
   () => workspaceStore.answerContent,
   () => {
-    nextTick(() => scrollToBottom());
+    if (userScrolledUp.value) return;
+    // rAF 确保 v-html 渲染完成后滚动，流式高频更新下也能跟上
+    requestAnimationFrame(() => scrollToBottom(true));
   },
 );
 
@@ -344,7 +348,17 @@ function isNearBottom(): boolean {
 }
 
 function onMessagesScroll() {
-  userScrolledUp.value = !isNearBottom();
+  const el = messagesContainer.value;
+  if (!el) return;
+  // 仅"向上滚动"手势（scrollTop 减小）视为用户查看历史，暂停跟随；
+  // 程序化向下滚动/在底部自动恢复
+  if (el.scrollTop < lastScrollTop - 4) {
+    userScrolledUp.value = true;
+  }
+  if (isNearBottom()) {
+    userScrolledUp.value = false;
+  }
+  lastScrollTop = el.scrollTop;
 }
 
 function scrollToBottom(force = false) {
