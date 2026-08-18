@@ -177,3 +177,111 @@ export function startListening(opts: ListeningOptions): (() => void) | null {
     }
   };
 }
+
+/* ===== 录音 + 后端 ASR（国内可用，走火山） ===== */
+
+let recorder: MediaRecorder | null = null;
+let recorderChunks: Blob[] = [];
+
+export interface RecordingOptions {
+  onStart?: () => void;
+  onStop?: (blob: Blob) => void;
+  onError?: (message: string) => void;
+}
+
+/** 开始录音（MediaRecorder，输出 wav/webm） */
+export async function startRecording(opts: RecordingOptions): Promise<boolean> {
+  if (recorder) return true;
+  if (!navigator.mediaDevices?.getUserMedia) {
+    opts.onError?.("当前浏览器不支持录音");
+    return false;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mime = MediaRecorder.isTypeSupported("audio/webm")
+      ? "audio/webm"
+      : MediaRecorder.isTypeSupported("audio/mp4")
+        ? "audio/mp4"
+        : "";
+    recorder = mime
+      ? new MediaRecorder(stream, { mimeType: mime })
+      : new MediaRecorder(stream);
+    recorderChunks = [];
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) recorderChunks.push(e.data);
+    };
+    recorder.onstop = () => {
+      const blob = new Blob(recorderChunks, {
+        type: recorder?.mimeType || "audio/webm",
+      });
+      recorder = null;
+      stream.getTracks().forEach((t) => t.stop());
+      opts.onStop?.(blob);
+    };
+    recorder.onerror = () => {
+      opts.onError?.("录音出错");
+      recorder = null;
+      stream.getTracks().forEach((t) => t.stop());
+    };
+    recorder.start();
+    opts.onStart?.();
+    return true;
+  } catch {
+    opts.onError?.("无法访问麦克风，请检查权限或改用文字输入");
+    return false;
+  }
+}
+
+/** 停止录音并返回 blob */
+export function stopRecording(): void {
+  if (recorder && recorder.state !== "inactive") {
+    try {
+      recorder.stop();
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+/** 上传录音到后端火山 ASR，转文字 */
+export async function transcribeAudio(
+  blob: Blob,
+  opts?: { onError?: (message: string) => void },
+): Promise<string> {
+  try {
+    const base64 = await blobToBase64(blob);
+    const format = blob.type.includes("mp4")
+      ? "mp4"
+      : blob.type.includes("ogg")
+        ? "ogg"
+        : "wav";
+    const res = await fetch("/api/voice/asr", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ audio: base64, format }),
+    });
+    const json = (await res.json()) as {
+      ok?: boolean;
+      text?: string;
+      message?: string;
+    };
+    if (res.ok && json.ok === true && json.text) return json.text;
+    throw new Error(json.message || `语音识别失败（${res.status}）`);
+  } catch (error: any) {
+    opts?.onError?.(error?.message || "语音识别失败");
+    return "";
+  }
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      const comma = result.indexOf(",");
+      resolve(comma >= 0 ? result.slice(comma + 1) : result);
+    };
+    reader.onerror = () => reject(new Error("读取录音失败"));
+    reader.readAsDataURL(blob);
+  });
+}

@@ -385,7 +385,9 @@ import {
   preloadVoices,
   speak,
   stopSpeaking,
-  startListening,
+  startRecording,
+  stopRecording,
+  transcribeAudio,
 } from "../utils/voice";
 
 type InterviewState =
@@ -415,7 +417,6 @@ const turns = ref<LocalTurn[]>([]);
 const micActive = ref(false);
 const micError = ref("");
 const textAnswer = ref("");
-let stopListen: (() => void) | null = null;
 
 const statusText = computed(() => {
   switch (state.value) {
@@ -451,7 +452,7 @@ onMounted(() => preloadVoices());
 
 onBeforeUnmount(() => {
   stopSpeaking();
-  stopListen?.();
+  stopRecording();
 });
 
 async function startInterview() {
@@ -488,29 +489,38 @@ function skipSpeaking() {
 
 function toggleMic() {
   if (micActive.value) {
-    stopListen?.();
-    stopListen = null;
     micActive.value = false;
+    stopRecording();
     return;
   }
   micActive.value = true;
   micError.value = "";
-  stopListen = startListening({
+  // 录音 → 后端火山 ASR 转文字（国内可用；浏览器原生识别走 Google 常被墙）
+  void startRecording({
     onStart: () => {
       micActive.value = true;
     },
-    onResult: (text) => {
+    onStop: (blob) => {
       micActive.value = false;
-      stopListen = null;
-      submitAnswer(text);
+      state.value = "thinking";
+      void transcribeAudio(blob, {
+        onError: (message) => {
+          micError.value = message;
+          state.value = "listening";
+        },
+      }).then((text) => {
+        if (text) {
+          submitAnswer(text);
+        } else {
+          state.value = "listening";
+        }
+      });
     },
     onError: (message) => {
       micActive.value = false;
-      stopListen = null;
       micError.value = message;
     },
   });
-  if (!stopListen) micActive.value = false;
 }
 
 async function submitAnswer(answer: string) {
@@ -519,8 +529,7 @@ async function submitAnswer(answer: string) {
   if (state.value !== "listening") return;
 
   submitting.value = true;
-  stopListen?.();
-  stopListen = null;
+  stopRecording();
   micActive.value = false;
   textAnswer.value = "";
   state.value = "thinking";
@@ -571,8 +580,7 @@ function resetInterview() {
   textAnswer.value = "";
   micError.value = "";
   micActive.value = false;
-  stopListen?.();
-  stopListen = null;
+  stopRecording();
 }
 </script>
 

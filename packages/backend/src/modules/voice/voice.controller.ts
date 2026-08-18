@@ -120,4 +120,88 @@ export class VoiceController {
       throw new BadRequestException(`语音合成失败：${message}`);
     }
   }
+
+  /** 火山方舟 ASR：语音识别（录音 → 文字，国内可用） */
+  @Post("asr")
+  async asr(
+    @Body() body: { audio?: string; format?: string },
+  ): Promise<{ ok: true; text: string }> {
+    const audio = (body.audio ?? "").trim();
+    if (!audio) throw new BadRequestException("audio 不能为空");
+    if (audio.length > 8_000_000)
+      throw new BadRequestException("音频过大（最多约 6MB）");
+
+    const apiKey = this.readEnv("LLM_API_KEY");
+    if (!apiKey)
+      throw new BadRequestException("LLM_API_KEY 未配置，无法使用语音识别");
+
+    const model = this.readEnv("ASR_MODEL") || "doubao-asr-1-240826";
+    const baseUrl = this.readEnv("LLM_BASE_URL") || "";
+    const asrUrl = /ark\.cn-beijing\.volces\.com/i.test(baseUrl)
+      ? baseUrl.replace(/\/+$/, "") + "/audio/asr"
+      : this.readEnv("ASR_BASE_URL");
+    if (!asrUrl)
+      throw new BadRequestException(
+        "当前 LLM 非火山方舟，无法使用火山语音识别",
+      );
+
+    // ark 多模态语音识别：content 内嵌 base64 音频
+    const mime =
+      body.format === "wav"
+        ? "audio/wav"
+        : body.format === "mp3"
+          ? "audio/mpeg"
+          : "audio/wav";
+    const payload = {
+      model,
+      content: [
+        {
+          type: "audio",
+          audio_url: `data:${mime};base64,${audio}`,
+        },
+      ],
+    };
+
+    try {
+      const res = await fetch(asrUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const errText = (await res.text()).slice(0, 300);
+        this.logger.warn(`ASR failed ${res.status}: ${errText}`);
+        throw new BadRequestException(`语音识别失败（${res.status}）`);
+      }
+
+      const json = await res.json();
+      // ark 返回 content 数组，取纯文本
+      const contents = json?.content ?? json?.choices?.[0]?.message?.content;
+      let text = "";
+      if (typeof contents === "string") {
+        text = contents;
+      } else if (Array.isArray(contents)) {
+        text = contents
+          .map((c: any) => (typeof c === "string" ? c : (c?.text ?? "")))
+          .join("");
+      } else if (typeof json?.text === "string") {
+        text = json.text;
+      }
+      const cleaned = text.trim();
+      if (!cleaned)
+        throw new BadRequestException(
+          "语音识别未返回内容（可能未开通语音模型）",
+        );
+      return { ok: true, text: cleaned };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      const message = error instanceof Error ? error.message : "语音识别失败";
+      this.logger.warn(`ASR error: ${message}`);
+      throw new BadRequestException(`语音识别失败：${message}`);
+    }
+  }
 }
