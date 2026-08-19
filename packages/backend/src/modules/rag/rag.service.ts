@@ -148,22 +148,34 @@ export class RagService {
   async searchSimilar(query: string, limit = 5): Promise<string[]> {
     if (!query.trim()) return [];
 
-    // Generate query embedding
-    const [queryEmbedding] = await this.generateEmbeddings([query]);
-    const embeddingStr = `[${queryEmbedding.join(",")}]`;
+    try {
+      // Generate query embedding
+      const [queryEmbedding] = await this.generateEmbeddings([query]);
+      const embeddingStr = `[${queryEmbedding.join(",")}]`;
 
-    // pgvector cosine similarity search (1 - cosine_distance)
-    const result: any[] = await this.prisma.$queryRawUnsafe(
-      `SELECT content, 1 - (embedding <=> $1::vector) AS similarity
-       FROM "Chunk"
-       WHERE embedding IS NOT NULL
-       ORDER BY embedding <=> $1::vector
-       LIMIT $2`,
-      embeddingStr,
-      limit,
-    );
+      // pgvector cosine similarity search (1 - cosine_distance)
+      const result: any[] = await this.prisma.$queryRawUnsafe(
+        `SELECT content, 1 - (embedding <=> $1::vector) AS similarity
+         FROM "Chunk"
+         WHERE embedding IS NOT NULL
+         ORDER BY embedding <=> $1::vector
+         LIMIT $2`,
+        embeddingStr,
+        limit,
+      );
 
-    return result.map((r: any) => r.content);
+      return result.map((r: any) => r.content);
+    } catch (err: any) {
+      // 本地无 pgvector 或向量不可用时降级：返回最近上传的 chunks
+      this.logger.warn(
+        `Vector search unavailable (${err.message}), falling back to recent chunks`,
+      );
+      const chunks = await this.prisma.chunk.findMany({
+        orderBy: { chunkIndex: "asc" },
+        take: limit,
+      });
+      return chunks.map((c: any) => c.content);
+    }
   }
 
   private async parseFile(filePath: string): Promise<string> {
@@ -218,6 +230,43 @@ export class RagService {
   private async generateEmbeddings(texts: string[]): Promise<number[][]> {
     const openai = this.getOpenAI();
     const model = process.env.EMBEDDING_MODEL || "text-embedding-3-small";
+    // 多模态向量模型（如 doubao-embedding-vision-*）走 /embeddings/multimodal，
+    // 输入为 {type,text} 扁平项，且一次请求只返回一个向量，需逐条调用。
+    const isMultimodal =
+      process.env.EMBEDDING_ENDPOINT === "multimodal" ||
+      /vision|multimodal/i.test(model);
+
+    if (isMultimodal) {
+      const baseUrl = (process.env.EMBEDDING_BASE_URL || "").replace(/\/$/, "");
+      const headers = {
+        Authorization: `Bearer ${process.env.EMBEDDING_API_KEY}`,
+        "Content-Type": "application/json",
+      };
+      const allEmbeddings: number[][] = [];
+      for (const text of texts) {
+        const res = await fetch(`${baseUrl}/embeddings/multimodal`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ model, input: [{ type: "text", text }] }),
+        });
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(
+            `Multimodal embedding failed (${res.status}): ${body}`,
+          );
+        }
+        const json = await res.json();
+        const emb = json?.data?.embedding;
+        if (!Array.isArray(emb)) {
+          throw new Error(
+            `Multimodal embedding response missing data.embedding: ${JSON.stringify(json)}`,
+          );
+        }
+        allEmbeddings.push(emb);
+      }
+      return allEmbeddings;
+    }
+
     const batchSize = 100;
     const allEmbeddings: number[][] = [];
 
@@ -241,6 +290,19 @@ export class RagService {
     // Delete existing chunks
     await this.prisma.chunk.deleteMany({ where: { documentId } });
 
+    // 检测数据库是否支持 pgvector（本地开发库可能没有 vector 扩展）
+    let vectorSupported = true;
+    try {
+      await this.prisma.$executeRawUnsafe(
+        `SELECT embedding::vector FROM "Chunk" LIMIT 0`,
+      );
+    } catch {
+      vectorSupported = false;
+      this.logger.warn(
+        "pgvector not available (Chunk.embedding), skipping vector storage",
+      );
+    }
+
     for (let i = 0; i < texts.length; i++) {
       const embeddingStr = `[${embeddings[i].join(",")}]`;
 
@@ -253,12 +315,20 @@ export class RagService {
         },
       });
 
-      // Use raw SQL to set vector embedding
-      await this.prisma.$executeRawUnsafe(
-        `UPDATE "Chunk" SET embedding = $1::vector WHERE id = $2`,
-        embeddingStr,
-        chunk.id,
-      );
+      // Use raw SQL to set vector embedding (only when pgvector exists)
+      if (vectorSupported) {
+        try {
+          await this.prisma.$executeRawUnsafe(
+            `UPDATE "Chunk" SET embedding = $1::vector WHERE id = $2`,
+            embeddingStr,
+            chunk.id,
+          );
+        } catch (err: any) {
+          this.logger.warn(
+            `Failed to store embedding for chunk ${chunk.id}: ${err.message}`,
+          );
+        }
+      }
     }
   }
 
